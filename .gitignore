@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+
+# ML Specific
+*.pkl
+*.h5
+*.ckpt
+*.pth
+mlruns/
+wandb/
+
+# Data -> Will use DVC for this
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Environment
+.env
+.env.local
+
+# IDEs
+.vscode/
+.cursor/
+.idea/
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
