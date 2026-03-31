@@ -17,8 +17,14 @@ wandb/
 # Data -> Will use DVC for this
 data/raw/*
 data/processed/*
+
+# Keep folder structure
 !data/raw/.gitkeep
 !data/processed/.gitkeep
+
+# Allow DVC tracking files
+!data/raw/*.dvc
+!data/processed/*.dvc
 
 # Environment
 .env
@@ -36,3 +42,7 @@ data/processed/*
 # OS
 .DS_Store
 Thumbs.db
+
+# Misc
+project-plan.md
+requirements-lock.txt
