@@ -22,6 +22,17 @@ Customer churn costs SaaS companies millions annually. ChurnGuard AI predicts wh
 - **Deployment:** Docker, AWS
 - **Monitoring:** Evidently, Prometheus, Grafana
 
+## Data Generation
+
+**Version History:**
+- `v1` (buggy): Had negative CallMinutes/DataUsage, dtype inconsistencies
+- `v2` (current): Fixed np.clip(), proper dtype enforcement
+
+**Known issues addressed:**
+1. Negative usage values -> clipped to 0
+2. InternetService nulls -> represent "No Service" customers
+3. dtype consistency -> enforced at generation time
+
 ## Project Status
 🚧 **In Development** - Phase I: Data Foundation
 
