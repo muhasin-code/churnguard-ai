@@ -47,6 +47,8 @@ Thumbs.db
 project-plan.md
 requirements-lock.txt
 todo.txt
+setup.py
+*.egg-info
 
 # Great expectations
 great_expectations/uncommitted/

@@ -55,7 +55,7 @@ def generate_customer_data(n=50000, seed=42):
 
         # --- Subscription details ---
         contract_type =  np.random.choice(
-            ["Month-to-Month", "One year", "Two year"],
+            ["Month-to-Month", "One Year", "Two Year"],
             p=[0.6, 0.25, 0.15]
         )
         internet_service = np.random.choice(
@@ -67,7 +67,7 @@ def generate_customer_data(n=50000, seed=42):
         base_price = np.random.uniform(20, 100)
         if internet_service == "Fiber":
             base_price += 20
-        if contract_type == "Two year":
+        if contract_type == "Two Year":
             base_price -= 10
         monthly_charges = round(base_price, 2)
         total_charges = round(monthly_charges * max(1, tenure), 2)
@@ -100,7 +100,7 @@ def generate_customer_data(n=50000, seed=42):
         # Rule 3: Month-to-Month -> higher churn
         if contract_type == "Month-to-Month":
             churn_score += 1.2
-        elif contract_type == "One year":
+        elif contract_type == "One Year":
             churn_score -= 0.5
         else:
             churn_score -= 1.0

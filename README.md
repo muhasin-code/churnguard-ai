@@ -24,14 +24,50 @@ Customer churn costs SaaS companies millions annually. ChurnGuard AI predicts wh
 
 ## Data Generation
 
-**Version History:**
-- `v1` (buggy): Had negative CallMinutes/DataUsage, dtype inconsistencies
-- `v2` (current): Fixed np.clip(), proper dtype enforcement
+**Dataset:** `data/raw/telecom_data.csv`
+- **Rows:** 50,000 synthetic customer records
+- **Churn Rate:** ~65%
+- **Generation:** `scripts/generate_synthetic_data.py`
 
-**Known issues addressed:**
-1. Negative usage values -> clipped to 0
-2. InternetService nulls -> represent "No Service" customers
-3. dtype consistency -> enforced at generation time
+### Version History
+
+**v1.0 (Initial- Buggy)**
+- ❌ Negative usage values from unbounded distributions
+- ❌ InternetServices nulls ambiguous
+- ❌ Inconsistent dtypes
+
+**v2.0 (Current - Production-Ready)**
+- ✅ Fixed: Clipped distributions (CallMinutes, DataUsage ≥ 0)
+- ✅ Fixed: InternetService "No Service" explicit category
+- ✅ Fixed: Enforced dtypes (int64, float64, category)
+- ✅ Added: CLI with reproducible seeding
+- ✅ Added: Comprehensive data validation
+
+### Regenerating Data
+```bash
+# Default (50K rows, seed=42)
+python scripts/generate_synthetic_data.py
+
+# Custom size
+python scripts/generate_synthetic_data.py --rows 100000
+
+# Different seed
+python scripts/generate_synthetic_data.py --seed 123
+```
+
+## Data Quality
+
+All data undergoes automated validation using Great Expectations:
+
+- ✅ 42 data quality expectations
+- ✅ Schema validation (17 columns, correct types)
+- ✅ Range validation (no negative usage values)
+- ✅ Categorical validation (valid enum values)
+- ✅ Statistical validation (churn rate stability)
+
+[View Validation Report](gx/uncommitted/data_docs/local_site/index.html)
+
+![Data Validation](docs/screenshots/great_expectations_validation.png)
 
 ## Project Status
 🚧 **In Development** - Phase I: Data Foundation
