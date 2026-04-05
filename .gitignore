@@ -47,3 +47,7 @@ Thumbs.db
 project-plan.md
 requirements-lock.txt
 todo.txt
+
+# Great expectations
+great_expectations/uncommitted/
+great_expectations/.DS_Store
