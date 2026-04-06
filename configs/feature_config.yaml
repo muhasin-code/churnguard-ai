@@ -1,0 +1,129 @@
+# Feature Engineering Configuration for ChurnGuard AI
+# This file defines all feature transformations
+
+version: "2.0"
+description: "Feature engineering config based on EDA insights"
+
+# Features to drop before any processing
+features_to_drop:
+  - CustomerID          # Identifier, no predictive value
+  - CallMinutes         # Redundant with Engagement
+  - DataUsage           # Redundant with Engagement
+  - ChurnProbability    # Target leakage
+
+# Categorical features and their encoding strategy
+categorical_features:
+  
+  # Binary features (will become 0/1)
+  binary:
+    Gender:
+      type: "label_encoding"
+      mapping:
+        Male: 0
+        Female: 1
+  
+  # Low cardinality - use one-hot encoding
+  one_hot:
+    ContractType:
+      categories: ["Month-to-Month", "One year", "Two year"]
+      drop_first: true  # Avoid dummy variable trap
+    
+    InternetService:
+      categories: ["DSL", "Fiber", "No Service"]
+      drop_first: true
+    
+    PaymentMethod:
+      categories: ["Credit Card", "Debit Card", "UPI", "Cash"]
+      drop_first: true
+
+# Numerical features (will be scaled)
+numerical_features:
+  scale: 
+    - Age
+    - Tenure
+    - MonthlyCharges
+    - TotalCharges
+    - Engagement
+    - Complaints
+    - LatePayments
+  
+  no_scale:  # Keep as-is
+    - RecentSupportTickets  # Already binary 0/1
+
+# Engineered features to create
+engineered_features:
+  
+  tenure_buckets:
+    enabled: true
+    bins: [0, 6, 12, 24, 60, 100]
+    labels: ["New", "Growing", "Established", "Loyal", "Veteran"]
+    encode_as_onehot: true
+  
+  price_to_service_ratio:
+    enabled: true
+    formula: "monthly_charges / (num_services + 1)"
+    # num_services = count of internet + phone + other subscriptions
+  
+  high_risk_segment:
+    enabled: true
+    conditions:
+      - "tenure < 12"
+      - "monthly_charges > monthly_charges_median"
+      - "recent_support_tickets == 1"
+    output_type: "binary"
+  
+  contract_tenure_mismatch:
+    enabled: true
+    conditions:
+      - "contract_type == 'Month-to-Month'"
+      - "tenure > 24"
+    output_type: "binary"
+  
+  financial_stress_score:
+    enabled: true
+    formula: "late_payments + (complaints * 0.5)"
+    scale: true
+
+# Missing value handling strategy
+missing_value_strategy:
+  
+  numerical:
+    Age: "reject"         # Critical feature
+    Tenure: "reject"      # Critical feature
+    MonthlyCharges: "median"
+    TotalCharges: "zero"  # New customers
+    Engagement: "median"
+    Complaints: "zero"
+    LatePayments: "zero"
+  
+  categorical:
+    Gender: "mode"
+    ContractType: "mode"
+    InternetService: "constant:No Service"
+    PaymentMethod: "mode"
+  
+  create_indicators: true  # Add _was_missing columns
+
+# Scaling configuration
+scaling:
+  method: "standard"  # StandardScaler (mean=0, std=1)
+  # Alternative: "minmax" (range 0-1), "robust" (uses median, IQR)
+
+# Target encoding
+target:
+  column: "Churn"
+  encoding:
+    "Yes": 1
+    "No": 0
+
+# Feature selection (applied after all transformations)
+feature_selection:
+  enabled: false  # Enable after initial model training
+  method: "variance_threshold"  # Remove low-variance features
+  threshold: 0.01
+
+# Output configuration
+output:
+  save_feature_names: true
+  save_transformers: true
+  create_feature_importance_placeholders: true
