@@ -21,6 +21,61 @@ def validator():
 
 
 @pytest.fixture
+def unit_test_suite(validator):
+    """
+    Create a minimal expectation suite for unit testing.
+    """
+    suite_name = "unit_test_suite"
+    try:
+        suite = validator.context.get_expectation_suite(suite_name)
+        validator.context.delete_expectation_suite(suite_name)
+    except:
+        pass
+    
+    suite = validator.context.add_or_update_expectation_suite(suite_name)
+    
+    # Add one simple expectation that will pass
+    from great_expectations.core.expectation_configuration import ExpectationConfiguration
+    config = ExpectationConfiguration(
+        expectation_type="expect_table_columns_to_match_ordered_list",
+        kwargs={
+            "column_list": [
+                "CustomerID", "Gender", "Age", "Tenure", "ContractType", 
+                "InternetService", "MonthlyCharges", "TotalCharges", 
+                "CallMinutes", "DataUsage", "Complaints", 
+                "RecentSupportTickets", "PaymentMethod", "LatePayments", 
+                "Engagement", "ChurnProbability", "Churn"
+            ]
+        }
+    )
+    suite.add_expectation(config)
+    
+    # Add a categorical constraint that we can use for failure testing
+    config_cat = ExpectationConfiguration(
+        expectation_type="expect_column_values_to_be_in_set",
+        kwargs={
+            "column": "Gender",
+            "value_set": ["Male", "Female"]
+        }
+    )
+    suite.add_expectation(config_cat)
+
+    # Add a numeric constraint for failure testing
+    config_num = ExpectationConfiguration(
+        expectation_type="expect_column_values_to_be_between",
+        kwargs={
+            "column": "CallMinutes",
+            "min_value": 0,
+            "max_value": 2000
+        }
+    )
+    suite.add_expectation(config_num)
+    
+    validator.context.save_expectation_suite(suite)
+    return suite_name
+
+
+@pytest.fixture
 def valid_sample_data():
     """
     Create a small valid dataset for testing.
@@ -111,7 +166,7 @@ def test_validator_initialization():
     assert hasattr(validator, 'validate_raw_data')
 
 
-def test_valid_data_passes(validator, valid_sample_data):
+def test_valid_data_passes(validator, valid_sample_data, unit_test_suite):
     """
     Test that valid data passes validation.
     """
@@ -122,13 +177,13 @@ def test_valid_data_passes(validator, valid_sample_data):
     
     try:
         # Should not raise exception
-        result = validator.validate_raw_data(temp_path)
+        result = validator.validate_raw_data(temp_path, expectation_suite_name=unit_test_suite)
         assert result == True
     finally:
         Path(temp_path).unlink()
 
 
-def test_negative_usage_fails(validator, invalid_data_negative_usage):
+def test_negative_usage_fails(validator, invalid_data_negative_usage, unit_test_suite):
     """
     Test that negative usage values are caught.
     """
@@ -137,13 +192,13 @@ def test_negative_usage_fails(validator, invalid_data_negative_usage):
         invalid_data_negative_usage.to_csv(temp_path, index=False)
     
     try:
-        with pytest.raises(ValueError, match="data validation failed"):
-            validator.validate_raw_data(temp_path)
+        with pytest.raises(ValueError, match="Data validation failed"):
+            validator.validate_raw_data(temp_path, expectation_suite_name=unit_test_suite)
     finally:
         Path(temp_path).unlink()
 
 
-def test_wrong_category_fails(validator, invalid_data_wrong_category):
+def test_wrong_category_fails(validator, invalid_data_wrong_category, unit_test_suite):
     """Test that invalid categorical values are caught."""
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
         temp_path = f.name
@@ -151,7 +206,7 @@ def test_wrong_category_fails(validator, invalid_data_wrong_category):
     
     try:
         with pytest.raises(ValueError, match="Data validation failed"):
-            validator.validate_raw_data(temp_path)
+            validator.validate_raw_data(temp_path, expectation_suite_name=unit_test_suite)
     finally:
         Path(temp_path).unlink()
 

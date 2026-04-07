@@ -119,13 +119,17 @@ class ColumnDropper(BaseTransformer):
         self.columns = columns
     
     def fit(self, X: pd.DataFrame, y: Optional[pd.Series] = None):
-        """Fit the dropper (just validates columns exist)."""
+        """Fit the dropper (validates and records columns to drop)."""
         self._validate_input(X)
         
-        # Check that columns to drop exist
+        # Warn about missing columns but don't raise — they may not
+        # be present in every dataset variant (e.g. already dropped)
         missing = set(self.columns) - set(X.columns)
         if missing:
-            raise ValueError(f"Columns not found in DataFrame: {missing}")
+            import warnings
+            warnings.warn(
+                f"Columns not found in DataFrame (will be ignored): {missing}"
+            )
         
         self.feature_names_in_ = list(X.columns)
         self.feature_names_out_ = [col for col in X.columns if col not in self.columns]

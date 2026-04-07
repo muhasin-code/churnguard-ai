@@ -76,6 +76,8 @@ class TenureBucketer(BaseTransformer):
                 prefix='TenureBucket',
                 drop_first=True  # Avoid multicollinearity
             )
+            # Convert bool columns to int for ML compatibility
+            dummies = dummies.astype(int)
             X = pd.concat([X, dummies], axis=1)
             X = X.drop(columns=['TenureBucket'])
         

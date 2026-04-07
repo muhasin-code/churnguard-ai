@@ -326,6 +326,8 @@ class CategoricalEncoder(BaseTransformer):
                         prefix=col,
                         drop_first=spec.get('drop_first', True)
                     )
+                    # Convert bool columns to int for ML compatibility
+                    dummies = dummies.astype(int)
                     X = pd.concat([X, dummies], axis=1)
                     X = X.drop(columns=[col])
         
