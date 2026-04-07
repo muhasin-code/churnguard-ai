@@ -15,6 +15,7 @@ mlflow==2.8.0
 # Data Versioning - Use older stable versions
 dvc==3.30.0
 dvc-s3==3.0.0
+dvc-objects<1.4.0
 
 # Workflow Orchestration
 prefect==2.13.0
