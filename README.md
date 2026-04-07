@@ -69,6 +69,27 @@ All data undergoes automated validation using Great Expectations:
 
 ![Data Validation](docs/screenshots/great_expectations_validation.png)
 
+## Feature Engineering
+
+**28 features** engineered from 16 raw features, including:
+
+### Engineered Features
+- **Tenure Buckets:** Customer lifecycle stages (New → Veteran)
+- **Price-to-Service Ratio:** Value perception metric
+- **High-Risk Segment:** Multi-factor churn risk flag
+- **Contract-Tenure Mismatch:** Exit planning detection
+- **Financial Stress Score:** Payment difficulty indicator
+
+### Encoding & Scaling
+- One-hot encoding for categorical variables (drop_first=True)
+- StandardScaler for numerical features (mean=0, std=1)
+- Binary label encoding for target (Churn: Yes=1, No=0)
+
+### Reproducibility
+All transformations saved in `models/feature_pipeline.pkl` for production use.
+
+**View details:** [Feature Engineering Plan](docs/feature_engineering_plan.md)
+
 ## Project Status
 🚧 **In Development** - Phase I: Data Foundation
 
