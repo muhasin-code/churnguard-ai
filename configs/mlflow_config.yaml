@@ -1,0 +1,45 @@
+# MLflow Configuration for ChurnGuard AI
+
+tracking:
+  uri: "http://localhost:5000"  # MLflow tracking server URL
+  experiment_name: "churnguard-churn-prediction"
+  
+  # Experiment tags (for organization)
+  experiment_tags:
+    project: "ChurnGuard AI"
+    phase: "model-development"
+    owner: "muhasin"
+
+# Run naming convention
+run_naming:
+  prefix: "churn"  # e.g., churn-logistic-v1
+  include_timestamp: true
+
+# What to log in every run
+logging:
+  log_params: true
+  log_metrics: true
+  log_artifacts: true
+  log_model: true
+  log_feature_importance: true
+  log_confusion_matrix: true
+  log_dataset_info: true
+
+# Metrics to track
+metrics:
+  primary: "roc_auc"  # Main metric for model selection
+  secondary:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1"
+    - "pr_auc"  # Precision-Recall AUC (good for imbalanced data)
+
+# Model registry settings
+registry:
+  model_name: "churnguard-classifier"
+  staging_threshold:  # Minimum metrics to promote to staging
+    roc_auc: 0.80
+  production_threshold:  # Minimum metrics to promote to production
+    roc_auc: 0.85
+    precision: 0.75
