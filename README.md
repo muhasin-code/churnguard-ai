@@ -95,17 +95,17 @@ All transformations saved in `models/feature_pipeline.pkl` for production use.
 ### Baseline Model (Logistic Regression)
 
 **Performance:**
-- **ROC-AUC:** 0.8234
-- **Accuracy:** 73.89%
-- **Precision:** 76.12%
-- **Recall:** 80.54%
+- **ROC-AUC:** 0.8003
+- **Accuracy:** 72.71%
+- **Precision:** 82.92%
+- **Recall:** 73.03%
 
 **Status:** ✅ Baseline established (exceeds minimum 0.75 ROC-AUC threshold)
 
 **Key Findings:**
-- Contract type (Month-to-Month) is strongest churn predictor
-- Engineered features (IsHighRisk, ContractTenureMismatch) highly predictive
-- Model catches 80% of churners with 76% precision
+- Long-term contracts (1-year, 2-year) strongly reduce churn
+- Recent support tickets and complaints are major churn indicators
+- Model captures ~73% of churners with high precision (~83%)
 
 **View full model card:** [docs/model_cards/baseline_logistic_regression.md](docs/model_cards/baseline_logistic_regression.md)
 
