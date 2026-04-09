@@ -112,15 +112,14 @@ All transformations saved in `models/feature_pipeline.pkl` for production use.
 **MLflow Tracking:** All experiments tracked at http://localhost:5000
 
 ## Project Status
-🚧 **In Development** - Phase I: Data Foundation
+🚧 **In Development** - Phase II: Model Development & Experiment Tracking
 
 ## Milestones
-- [x] Project setup
-- [ ] Data pipeline
-- [ ] Model development
-- [ ] MLOps infrastructure
-- [ ] API deployment
-- [ ] Production Monitoring
+- [x] MLflow Setup & Baseline Model
+- [ ] Model Experimentation
+- [ ] Model Evaluation & Interpretability
+- [ ] Model Registry Setup
+- [ ] Model Optimization
 
 ## Quick Start
 Coming soon...

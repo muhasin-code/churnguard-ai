@@ -13,6 +13,7 @@ venv/
 *.pth
 mlruns/
 wandb/
+mlflow.db
 
 # Data -> Will use DVC for this
 data/raw/*
