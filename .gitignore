@@ -51,6 +51,7 @@ todo.txt
 setup.py
 *.egg-info
 milestone-plan.md
+plans/
 
 # Great expectations
 great_expectations/uncommitted/
