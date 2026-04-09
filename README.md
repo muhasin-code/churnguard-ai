@@ -90,6 +90,27 @@ All transformations saved in `models/feature_pipeline.pkl` for production use.
 
 **View details:** [Feature Engineering Plan](docs/feature_engineering_plan.md)
 
+## Model Development
+
+### Baseline Model (Logistic Regression)
+
+**Performance:**
+- **ROC-AUC:** 0.8234
+- **Accuracy:** 73.89%
+- **Precision:** 76.12%
+- **Recall:** 80.54%
+
+**Status:** ✅ Baseline established (exceeds minimum 0.75 ROC-AUC threshold)
+
+**Key Findings:**
+- Contract type (Month-to-Month) is strongest churn predictor
+- Engineered features (IsHighRisk, ContractTenureMismatch) highly predictive
+- Model catches 80% of churners with 76% precision
+
+**View full model card:** [docs/model_cards/baseline_logistic_regression.md](docs/model_cards/baseline_logistic_regression.md)
+
+**MLflow Tracking:** All experiments tracked at http://localhost:5000
+
 ## Project Status
 🚧 **In Development** - Phase I: Data Foundation
 
