@@ -111,12 +111,38 @@ All transformations saved in `models/feature_pipeline.pkl` for production use.
 
 **MLflow Tracking:** All experiments tracked at http://localhost:5000
 
+## Model Experimentation Results
+
+**Experiments:** 11 models trained and compared in MLflow  
+**Champion:** XGBoost Conservative (ROC-AUC: 0.8231)  
+**Business Value:** $94,500 annual savings from improved predictions
+
+### Model Comparison
+
+| Model Type | Best ROC-AUC | Status |
+|------------|--------------|--------|
+| XGBoost | **0.8231** | ✅ Champion |
+| LightGBM | 0.8212 | Runner-up |
+| Random Forest | 0.8159 | Good recall, lower precision |
+| Ensemble (Stacking) | 0.8231 | Ties champion, 4x complex |
+| Baseline (Logistic) | 0.8003 | Benchmark |
+
+**Key Findings:**
+- Gradient boosting significantly outperforms linear baseline (+2.8%)
+- Hyperparameter tuning provides minimal gains (<0.5%)
+- Ensembles add zero value due to high model correlation
+- Champion selected based on performance + simplicity trade-off
+
+**View detailed analysis:** [Model Experimentation Report](docs/model_experimentation_report.md)
+
+**MLflow Tracking:** All experiments logged at http://localhost:5000
+
 ## Project Status
 🚧 **In Development** - Phase II: Model Development & Experiment Tracking
 
 ## Milestones
 - [x] MLflow Setup & Baseline Model
-- [ ] Model Experimentation
+- [x] Model Experimentation
 - [ ] Model Evaluation & Interpretability
 - [ ] Model Registry Setup
 - [ ] Model Optimization
