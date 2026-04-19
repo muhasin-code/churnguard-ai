@@ -4,11 +4,11 @@
   "cost_fp": 50,
   "cost_fn": 600,
   "threshold": 0.1,
-  "total_cost": 193850.0,
-  "true_negatives": 503,
-  "false_positives": 3001,
-  "false_negatives": 73,
-  "true_positives": 6423,
-  "precision": 0.6815577249575552,
-  "recall": 0.9887623152709359
+  "total_cost": 187500.0,
+  "true_negatives": 294,
+  "false_positives": 3186,
+  "false_negatives": 47,
+  "true_positives": 6473,
+  "precision": 0.6701521896676674,
+  "recall": 0.9927914110429448
 }
