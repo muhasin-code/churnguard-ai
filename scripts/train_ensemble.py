@@ -1,8 +1,8 @@
 """
-Train ensemble models combining best peroformers from experimentation.
+Train ensemble models combining best performers from experimentation.
 
-- Your best single model: XGBoost Conservative (0.8231)
-- Target ensemble ROC-AUC: 0.825-0.833
+- Best single model: XGBoost Conservative (ROC-AUC: 0.8077)
+- Actual ensemble ROC-AUC achieved: 0.8057-0.8075
 """
 
 
@@ -29,7 +29,7 @@ def main():
     print("ChurnGuard AI - Ensemble Training")
     print("=" * 70 + "\n")
 
-    # Inintialize experiment 
+    # Initialize experiment
     experiment = ModelExperiment()
     experiment.load_data()
 
@@ -39,7 +39,7 @@ def main():
 
     print("Creating base models based on Phase 1 & 2 results...\n")
 
-    # Random Forest (best was rf-forest: 0.8159)
+    # Random Forest (best was rf-forest: ROC-AUC 0.7958)
     rf_model = RandomForestClassifier(
         n_estimators=300,
         max_depth=15,
@@ -48,7 +48,7 @@ def main():
         class_weight='balanced'
     )
 
-    # XGBoost (best was xgb-conservative: 0.8231)
+    # XGBoost (best was xgb-conservative: ROC-AUC 0.8077)
     xgb_model = XGBClassifier(
         n_estimators=200,
         learning_rate=0.05,
@@ -69,7 +69,7 @@ def main():
     scale_pos_weight = (experiment.y_train == 0).sum() / (experiment.y_train == 1).sum()
     xgb_model.set_params(scale_pos_weight=scale_pos_weight)
 
-    # LightGBM (best was lgbm-tuned: 0.8212)
+    # LightGBM (best was lgbm-tuned: ROC-AUC 0.8060)
     lgbm_model = LGBMClassifier(
         n_estimators=200,
         learning_rate=0.05,
@@ -183,23 +183,23 @@ def main():
     print("Ensemble Training Complete!")
     print("=" * 70)
 
-    # Adjusted expectations message
+    # Performance summary against actual results
     print("\nPerformance Analysis:")
-    print(f"   Baseline (Logistic Regression): 0.8003 ROC-AUC")
-    print(f"   Best Single Model (XGBoost):    0.8231 ROC-AUC (+2.3%)")
-    print(f"   Expected Ensemble Range:        0.825-0.833 ROC-AUC")
-    
+    print(f"   Baseline (Logistic Regression): 0.7944 ROC-AUC")
+    print(f"   Best Single Model (XGBoost):    0.8077 ROC-AUC (+1.7% vs baseline)")
+    print(f"   Actual Ensemble Range:          0.8057-0.8075 ROC-AUC")
+
     if len(experiment.results) > 0:
         best_ensemble = max(experiment.results, key=lambda x: x['roc_auc'])
-        improvement = best_ensemble['roc_auc'] - 0.8231
-        print(f"   Best Ensemble Achieved:         {best_ensemble['roc_auc']:.4f} ROC-AUC ({improvement:+.4f})")
-    
+        improvement = best_ensemble['roc_auc'] - 0.8077
+        print(f"   Best Ensemble Achieved:         {best_ensemble['roc_auc']:.4f} ROC-AUC ({improvement:+.4f} vs champion)")
+
     print("\nNext Steps:")
     print("   1. Review all models in MLflow UI")
-    print("   2. Champion model: XGBoost Conservative (0.8231 ROC-AUC)")
+    print("   2. Champion model: XGBoost Conservative (ROC-AUC 0.8077)")
     print("      - Best balance of performance and simplicity")
-    print("      - Ensembles add minimal gain (<1%) for 3x complexity")
-    print("   3. Proceed to Milestone 2.3 for detailed evaluation\n")
+    print("      - Ensembles add near-zero gain for 3x-4x complexity")
+    print("   3. Proceed to Milestone 2.3 for detailed evaluation")
 
 
 if __name__ == "__main__":

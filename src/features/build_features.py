@@ -75,7 +75,7 @@ class ChurnFeatureEngineer:
         Returns:
             self (for method chaining)
         """
-        print("🔧 Fitting feature engineering pipeline...")
+        print("Fitting feature engineering pipeline...")
         
         # Build pipeline
         self.feature_pipeline_ = self._build_pipeline()
@@ -91,7 +91,7 @@ class ChurnFeatureEngineer:
         self.feature_names_out_ = self._get_feature_names(X)
         
         self.is_fitted_ = True
-        print(f"✅ Pipeline fitted. Output features: {len(self.feature_names_out_)}")
+        print(f"Pipeline fitted. Output features: {len(self.feature_names_out_)}")
         
         return self
     
@@ -238,7 +238,7 @@ class ChurnFeatureEngineer:
         }
         
         joblib.dump(save_dict, filepath)
-        print(f"💾 Saved feature pipeline to {filepath}")
+        print(f"Saved feature pipeline to {filepath}")
     
     @classmethod
     def load(cls, filepath: str):
@@ -261,7 +261,7 @@ class ChurnFeatureEngineer:
         engineer.feature_names_out_ = save_dict['feature_names_out']
         engineer.is_fitted_ = True
         
-        print(f"📂 Loaded feature pipeline from {filepath}")
+        print(f"Loaded feature pipeline from {filepath}")
         return engineer
 
 

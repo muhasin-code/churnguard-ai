@@ -610,8 +610,8 @@ class ModelEvaluator:
         print(f"   Cost of False Positive: ${cost_fp}")
         print(f"   Cost of False Negative: ${cost_fn}")
         
-        # Try different thresholds
-        thresholds = np.linspace(0.1, 0.9, 81)
+        # Try different thresholds (search from 0.01 to avoid floor effect)
+        thresholds = np.linspace(0.01, 0.9, 90)
         costs = []
         
         for threshold in thresholds:

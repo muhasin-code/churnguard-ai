@@ -1,7 +1,8 @@
 """
-Comprehensive evalutaion of chanmpion model.
+Comprehensive evaluation of champion model.
 
-This script performs depp evaluation including SHAP analysis, error analysis, calibration assessment, and threshold optimization.
+This script performs deep evaluation including SHAP analysis, error analysis,
+calibration assessment, and threshold optimization.
 """
 
 
@@ -12,7 +13,7 @@ from pathlib import Path
 import mlflow
 import joblib
 
-# Add parent to your path
+# Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.models.evaluation_utils import ModelEvaluator
@@ -132,7 +133,7 @@ def main():
     # 8. SHAP Explanations
     # ==========================================================
     print("\n" + "=" * 70)
-    print("STEP 5: SHAP Explanations (Model Interpretaility)")
+    print("STEP 5: SHAP Explanations (Model Interpretability)")
     print("=" * 70)
 
     # Generate SHAP values (use sample for speed)

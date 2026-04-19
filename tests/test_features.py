@@ -36,7 +36,7 @@ def sample_data():
         'Gender': ['Male', 'Female', 'Male', 'Female'],
         'Age': [25, 45, 35, 60],
         'Tenure': [3, 18, 30, 65],
-        'ContractType': ['Month-to-Month', 'One year', 'Two year', 'Month-to-Month'],
+        'ContractType': ['Month-to-Month', 'One Year', 'Two Year', 'Month-to-Month'],
         'InternetService': ['Fiber', 'DSL', 'No Service', 'Fiber'],
         'MonthlyCharges': [85.0, 65.0, 45.0, 95.0],
         'TotalCharges': [255.0, 1170.0, 1350.0, 6175.0],

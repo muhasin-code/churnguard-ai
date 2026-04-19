@@ -125,7 +125,7 @@ class ModelExperiment:
         })
         
         # Train model
-        print("🏋️  Training model...")
+        print("Training model...")
         model = RandomForestClassifier(**params)
         model.fit(self.X_train, self.y_train)
         
@@ -242,7 +242,7 @@ class ModelExperiment:
         })
         
         # Train model
-        print("🏋️  Training model...")
+        print("Training model...")
         model = XGBClassifier(**params)
         
         # Fit with evaluation set for early stopping monitoring
@@ -361,7 +361,7 @@ class ModelExperiment:
         })
         
         # Train model
-        print("🏋️  Training model...")
+        print("Training model...")
         model = LGBMClassifier(**params)
         model.fit(self.X_train, self.y_train)
         
@@ -446,7 +446,7 @@ class ModelExperiment:
         })
         
         # Train
-        print("🏋️  Training ensemble...")
+        print("Training ensemble...")
         ensemble.fit(self.X_train, self.y_train)
         
         # Evaluate

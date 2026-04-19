@@ -25,7 +25,7 @@ categorical_features:
   # Low cardinality - use one-hot encoding
   one_hot:
     ContractType:
-      categories: ["Month-to-Month", "One year", "Two year"]
+      categories: ["Month-to-Month", "One Year", "Two Year"]
       drop_first: true  # Avoid dummy variable trap
     
     InternetService:

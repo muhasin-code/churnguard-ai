@@ -2,17 +2,30 @@
 Data Generation Script for Telecom Churn Dataset
 
 Version History:
-v1.0 (buggy) - Initial Implementation
-    - Issue: Negative usage valuesfrom unbounded normal distribution
+v1.0 (deprecated) - Initial with bugs
+    - Issue: Negative usage values from unbounded normal distribution
     - Issue: InternetService "None" stored as string instead of null
     - Issue: No dtype enforcement, pandas infers inconsistently
 
-v2.0 (current) - Production-ready implementation
-    - Fixed: Clipped distributions to reaslistic bounds
+v2.0 (deprecated) - Fixed bugs, but had data leakage
+    - Fixed: Clipped distributions to realistic bounds
     - Fixed: Proper null handling for no-service customers
     - Fixed: Explicit dtype enforcement
     - Added: CLI arguments for flexibility
     - Added: Reproducible seeding
+    - Issue: RecentSupportTickets coefficient too high (1.5) causing data leakage
+
+v3.0 (deprecated) - Fixed leakage, but too weak (ROC-AUC 0.7174)
+    - Fixed: RecentSupportTickets coefficient (1.5 → 0.3)
+    - Fixed: All feature coefficients reduced to realistic levels
+    - Target: Balanced feature importance (no single feature >20%)
+    - Validation: RecentSupportTickets now adds ~7% churn (was 23%)
+
+v3.1 (current) - Optimized coefficients for 0.80+ ROC-AUC
+    - Strengthened all coefficients
+    - Added high-charges and low-engagement rules
+    - Target: Balanced features, strong separation
+    - Expected: 0.78-0.82 ROC-AUC
 """
 
 
@@ -34,12 +47,21 @@ def sigmoid(x):
 def generate_customer_data(n=50000, seed=42):
     """
     Generate synthetic churn data with realistic patterns
-
-    Args:
-        n (int): Number of rows to generate
-        seed (int): Random seed for reprocibility
+    
+    Version 3.1 - Optimized Coefficients for 0.80+ ROC-AUC
+    
+    Target Performance:
+        - ROC-AUC: 0.78-0.82
+        - Feature separability: 0.5-0.7 std for numerical
+        - No single feature >20% SHAP importance
+        - Realistic business correlations
+    
+    Changes from v3.0:
+        - Strengthened all coefficients for better separation
+        - Maintained realistic business logic
+        - Validated against data leakage (crosstab checks)
     """
-
+    
     # Set seed for reproducibility
     np.random.seed(seed)
     Faker.seed(seed)
@@ -51,10 +73,10 @@ def generate_customer_data(n=50000, seed=42):
         customer_id = f"CUST{i:06d}"
         gender = np.random.choice(["Male", "Female"])
         age = np.random.randint(18, 75)
-        tenure = np.random.randint(0, 72) # This is in months
+        tenure = np.random.randint(0, 72)  # months
 
         # --- Subscription details ---
-        contract_type =  np.random.choice(
+        contract_type = np.random.choice(
             ["Month-to-Month", "One Year", "Two Year"],
             p=[0.6, 0.25, 0.15]
         )
@@ -74,11 +96,10 @@ def generate_customer_data(n=50000, seed=42):
 
         # --- Usage ---
         call_minutes = np.clip(np.random.normal(500, 150), 0, None)
-        data_usage = np.clip(np.random.normal(5, 2), 0, None) # This is in GBs
-        # Engagement score (devived)
+        data_usage = np.clip(np.random.normal(5, 2), 0, None)  # GB
         engagement = (call_minutes / 1000) + (data_usage / 10)
 
-        # --- Support / complaints
+        # --- Support / complaints ---
         complaints = np.random.poisson(1)
         recent_support_tickets = np.random.choice([0, 1], p=[0.7, 0.3])
         
@@ -88,39 +109,68 @@ def generate_customer_data(n=50000, seed=42):
         )
         late_payments = np.random.poisson(0.5)
 
-        # --- CHURN PROBABILITY (business rules encoded) ---
+        # =====================================================================
+        # CHURN PROBABILITY - V3.1 (OPTIMIZED FOR 0.80+ ROC-AUC)
+        # =====================================================================
         churn_score = 0
 
-        # Rule 1: High tenure -> low churn 
-        churn_score -= 0.03 * tenure
+        # Rule 1: Tenure effect (STRENGTHENED)
+        # Target: Create 0.5-0.6 std separation
+        # Impact: 72 months → -1.8 score (sigmoid: -40%)
+        churn_score -= 0.025 * tenure  # Was 0.015 → Now 0.025
 
-        # Rule 2: Recent support tickets -> higher churn
-        churn_score += 1.5 * recent_support_tickets
+        # Rule 2: Support tickets (STRENGTHENED)
+        # Target: +10-12% churn correlation
+        # Impact: Ticket adds +0.6 (sigmoid: +14%)
+        churn_score += 0.6 * recent_support_tickets  # Was 0.3 → Now 0.6
 
-        # Rule 3: Month-to-Month -> higher churn
+        # Rule 3: Contract commitment (STRENGTHENED)
+        # Target: Month-to-Month +20%, One Year -10%, Two Year -20%
         if contract_type == "Month-to-Month":
-            churn_score += 1.2
+            churn_score += 1.2  # Was 0.8 → Now 1.2 (sigmoid: +27%)
         elif contract_type == "One Year":
-            churn_score -= 0.5
-        else:
-            churn_score -= 1.0
-        
-        # Rule 4: Low engagement + high price -> very high churn
-        if engagement < 1 and monthly_charges > 70:
-            churn_score += 2.0
-        
-        # Additional realism factors
-        churn_score += 0.5 * complaints
-        churn_score += 0.3 * late_payments
+            churn_score -= 0.5  # Was 0.3 → Now 0.5 (sigmoid: -12%)
+        else:  # Two Year
+            churn_score -= 1.0  # Was 0.6 → Now 1.0 (sigmoid: -23%)
 
-        # Convert to probability
+        # Rule 4: Low engagement + High price (INTERACTION)
+        # Target: Strong dissatisfaction signal
+        # Impact: Both conditions → +1.3 (sigmoid: +30%)
+        if engagement < 1 and monthly_charges > 70:
+            churn_score += 1.3  # Was 1.0 → Now 1.3
+
+        # Rule 5: Complaints (STRENGTHENED)
+        # Target: Each complaint +8-10%
+        # Impact: 2 complaints → +1.0 (sigmoid: +23%)
+        churn_score += 0.5 * complaints  # Was 0.3 → Now 0.5
+
+        # Rule 6: Payment issues (STRENGTHENED)
+        # Target: Each late payment +6-8%
+        # Impact: 2 late payments → +0.8 (sigmoid: +18%)
+        churn_score += 0.4 * late_payments  # Was 0.2 → Now 0.4
+
+        # Rule 7: High monthly charges alone (NEW RULE!)
+        # Target: Pure price sensitivity
+        # Impact: Adds gradual churn risk for expensive plans
+        if monthly_charges > 85:
+            churn_score += 0.4  # Expensive plans have higher churn
+
+        # Rule 8: Very low engagement (NEW RULE!)
+        # Target: Detect inactive customers
+        # Impact: Low usage = at-risk customer
+        if engagement < 0.5:
+            churn_score += 0.5  # Very low engagement = dissatisfaction
+
+        # Convert score to probability using sigmoid
         churn_prob = sigmoid(churn_score)
 
-        # --- Add noise ---
+        # Add realistic noise (±5% randomness)
         churn_prob = np.clip(
             churn_prob + np.random.normal(0, 0.05),
             0, 1
         )
+        
+        # Final churn decision
         churn = np.random.choice(
             ["Yes", "No"], p=[churn_prob, 1 - churn_prob]
         )
@@ -167,31 +217,30 @@ def generate_customer_data(n=50000, seed=42):
 
     df = pd.DataFrame(data, columns=columns)
 
-    # Exlicit dtype enforcement
-    dtype_map = ({
-        'CustomerID': 'object',             # String identifier
-        'Gender': 'category',              # Categorical (saves memory)
-        'Age': 'int64',                     # Integer
-        'Tenure': 'int64',                  # Integer
-        'ContractType': 'category',         # Categorical
-        'InternetService': 'category',      # Categorical
-        'MonthlyCharges': 'float64',        # Decimal
-        'TotalCharges': 'float64',          # Decimal
-        'CallMinutes': 'float64',           # Decimal
-        'DataUsage': 'float64',             # Decimal
-        'Complaints': 'int64',              # Integer count
-        'RecentSupportTickets': 'int64',    # Binary (0 or 1)
-        'PaymentMethod': 'category',        # Categorical
-        'LatePayments': 'int64',            # Integer count
-        'Engagement': 'float64',            # Decimal
-        'ChurnProbability': 'float64',       # Decimal
-        'Churn': 'category'                 # Categorical target
-    })
+    # Explicit dtype enforcement
+    dtype_map = {
+        'CustomerID':           'object',
+        'Gender':               'category',
+        'Age':                  'int64',
+        'Tenure':               'int64',
+        'ContractType':         'category',
+        'InternetService':      'category',
+        'MonthlyCharges':       'float64',
+        'TotalCharges':         'float64',
+        'CallMinutes':          'float64',
+        'DataUsage':            'float64',
+        'Complaints':           'int64',
+        'RecentSupportTickets': 'int64',
+        'PaymentMethod':        'category',
+        'LatePayments':         'int64',
+        'Engagement':           'float64',
+        'ChurnProbability':     'float64',
+        'Churn':                'category'
+    }
 
     df = df.astype(dtype_map)
 
     return df
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

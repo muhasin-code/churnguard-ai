@@ -90,25 +90,25 @@ Examples:
     
     # Validate input file exists
     if not Path(args.input).exists():
-        print(f"❌ Error: Input file not found: {args.input}")
+        print(f"Error: Input file not found: {args.input}")
         sys.exit(1)
     
     print("=" * 60)
     print("ChurnGuard AI - Feature Engineering")
     print("=" * 60)
-    print(f"\n📂 Input: {args.input}")
-    print(f"📂 Output: {args.output}")
-    print(f"📂 Config: {args.config}")
-    print(f"📂 Pipeline: {args.save_pipeline}\n")
+    print(f"\n  Input:    {args.input}")
+    print(f"  Output:   {args.output}")
+    print(f"  Config:   {args.config}")
+    print(f"  Pipeline: {args.save_pipeline}\n")
     
     # Load raw data
-    print("📊 Loading raw data...")
+    print("Loading raw data...")
     df = pd.read_csv(args.input)
     print(f"   Loaded {len(df):,} rows, {len(df.columns)} columns")
     
     # Separate features and target
     if 'Churn' not in df.columns:
-        print("❌ Error: 'Churn' column not found in data")
+        print("Error: 'Churn' column not found in data")
         sys.exit(1)
     
     X = df.drop(columns=['Churn'])
@@ -120,7 +120,7 @@ Examples:
     # Split into train/test
     from sklearn.model_selection import train_test_split
     
-    print(f"\n🔀 Splitting data (test_size={args.test_split})...")
+    print(f"\nSplitting data (test_size={args.test_split})...")
     X_train, X_test, y_train, y_test = train_test_split(
         X, y,
         test_size=args.test_split,
@@ -132,31 +132,31 @@ Examples:
     print(f"   Test:  {len(X_test):,} rows")
     
     # Initialize feature engineer
-    print(f"\n🔧 Initializing feature engineer...")
+    print(f"\nInitializing feature engineer...")
     engineer = ChurnFeatureEngineer(config_path=args.config)
     
     # Fit on training data
-    print("🏋️  Fitting transformations on training data...")
+    print("Fitting transformations on training data...")
     engineer.fit(X_train, y_train)
     
     # Transform both sets
-    print("⚙️  Transforming training data...")
+    print("Transforming training data...")
     X_train_transformed, y_train_encoded = engineer.transform(X_train, y_train)
     
-    print("⚙️  Transforming test data...")
+    print("Transforming test data...")
     X_test_transformed, y_test_encoded = engineer.transform(X_test, y_test)
     
-    print(f"\n✅ Transformation complete!")
+    print(f"\nTransformation complete!")
     print(f"   Input features:  {len(X.columns)}")
     print(f"   Output features: {len(X_train_transformed.columns)}")
     
     if args.verbose:
-        print(f"\n📋 Output features:")
+        print(f"\nOutput features:")
         for i, col in enumerate(X_train_transformed.columns, 1):
             print(f"   {i:2d}. {col}")
     
     # Combine train and test back together with target
-    print(f"\n💾 Saving processed features...")
+    print(f"\nSaving processed features...")
     
     # Create output directory
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -176,11 +176,11 @@ Examples:
     print(f"   Test:  {test_output} ({len(test_df):,} rows)")
     
     # Save feature pipeline
-    print(f"\n💾 Saving feature pipeline...")
+    print(f"\nSaving feature pipeline...")
     engineer.save(args.save_pipeline)
     
     # Generate feature summary
-    print(f"\n📊 Feature Engineering Summary:")
+    print(f"\nFeature Engineering Summary:")
     print(f"   {'='*50}")
     print(f"   Original features:     {len(X.columns)}")
     print(f"   Dropped features:      {len(engineer.config['features_to_drop'])}")
@@ -189,14 +189,14 @@ Examples:
     print(f"   {'='*50}")
     
     # Data quality checks
-    print(f"\n🔍 Data Quality Checks:")
+    print(f"\nData Quality Checks:")
     print(f"   Missing values (train): {X_train_transformed.isnull().sum().sum()}")
     print(f"   Missing values (test):  {X_test_transformed.isnull().sum().sum()}")
     print(f"   Infinite values (train): {np.isinf(X_train_transformed.select_dtypes(include=[np.number])).sum().sum()}")
     print(f"   Infinite values (test):  {np.isinf(X_test_transformed.select_dtypes(include=[np.number])).sum().sum()}")
     
-    print(f"\n✅ Feature engineering complete!")
-    print(f"\n📝 Next steps:")
+    print(f"\nFeature engineering complete!")
+    print(f"\nNext steps:")
     print(f"   1. Review output features in {train_output}")
     print(f"   2. Track processed data with DVC:")
     print(f"      dvc add {train_output}")
