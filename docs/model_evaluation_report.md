@@ -1,9 +1,8 @@
-```markdown
 # Model Evaluation Report - XGBoost Champion
 
-**Model:** XGBoost Conservative  
-**Date:** 2026-04-12  
-**Evaluation Dataset:** 10,000 test customers  
+**Model:** XGBoost Conservative
+**Date:** 2026-04-19
+**Evaluation Dataset:** 10,000 test customers
 **Report Author:** Muhammed Muhasin K
 
 ---
@@ -13,12 +12,12 @@
 **Purpose:** Deep evaluation of champion model to ensure production readiness and trustworthiness.
 
 **Key Findings:**
-- ✅ **Performance:** ROC-AUC 0.8231, meets production threshold (>0.80)
-- ✅ **Interpretability:** SHAP explanations confirm business logic
-- ✅ **Calibration:** Good probability calibration (Brier=0.153)
+- ✅ **Performance:** ROC-AUC 0.8077, meets production threshold (>0.80)
+- ✅ **Interpretability:** SHAP explanations confirm business logic (contract type is top predictor)
+- ✅ **Calibration:** Good probability calibration (Brier=0.1786)
 - ✅ **Production Ready:** No major concerns identified
 
-**Recommendation:** Deploy with confidence. Consider threshold adjustment (0.437) for cost optimization.
+**Recommendation:** Deploy with confidence. Review threshold strategy before production (see Threshold Optimization section).
 
 ---
 
@@ -38,9 +37,9 @@ This report follows industry best practices for ML model evaluation:
 ### Test Set
 
 - **Size:** 10,000 customers (20% stratified holdout)
-- **Churn Rate:** 64.96% (6,496 churners, 3,504 retained)
+- **Churn Rate:** 65.20% (6,520 churners, 3,480 retained)
 - **Feature Count:** 24 engineered features
-- **Data Version:** features_v1 (DVC-tracked)
+- **Data Version:** features_v1 (generated from `generate_synthetic_data_v3.1.py`)
 
 ---
 
@@ -50,12 +49,12 @@ This report follows industry best practices for ML model evaluation:
 
 | Metric | Value | Interpretation |
 |--------|-------|----------------|
-| **ROC-AUC** | 0.8231 | Excellent discrimination ability |
-| **PR-AUC** | 0.8934 | Strong performance on imbalanced data |
-| Accuracy | 74.39% | Correct predictions |
-| Precision | 83.99% | 84% of churn predictions correct |
-| Recall | 74.85% | Catching 75% of churners |
-| F1 Score | 0.7910 | Balanced metric |
+| **ROC-AUC** | **0.8077** | Strong discrimination ability |
+| **PR-AUC** | 0.8786 | Good performance on imbalanced data |
+| Accuracy | 73.66% | Correct predictions |
+| Precision | 83.60% | 84% of churn predictions correct |
+| Recall | 74.14% | Catching 74% of churners |
+| F1 Score | 0.7859 | Balanced metric |
 
 **Assessment:** All metrics exceed production thresholds ✅
 
@@ -68,8 +67,8 @@ This report follows industry best practices for ML model evaluation:
 ```
                  Predicted
                No      Yes
-Actual  No   2590     914
-        Yes  1632    4864
+Actual  No   2532     948
+        Yes  1686    4834
 ```
 
 **Normalized:**
@@ -77,25 +76,25 @@ Actual  No   2590     914
 ```
                  Predicted
                No      Yes
-Actual  No   73.9%   26.1%    (74% correctly kept)
-        Yes  25.1%   74.9%    (75% correctly identified)
+Actual  No   72.8%   27.2%    (73% correctly kept)
+        Yes  25.9%   74.1%    (74% correctly identified)
 ```
 
 **Error Analysis:**
 
-**False Positives (914 cases):**
+**False Positives (948 cases):**
 - Non-churners incorrectly flagged
-- Cost: 914 × $50 = **$45,700** in wasted campaigns
-- Characteristics: Medium tenure (28 months), moderate charges ($72)
+- Cost: 948 × $50 = **$47,400** in wasted campaigns
+- Characteristics: Mean tenure (scaled) = -0.16, MonthlyCharges (scaled) = +0.05
 - Interpretation: Model is slightly aggressive on borderline cases
 
-**False Negatives (1,632 cases):**
+**False Negatives (1,686 cases):**
 - Churners we missed
-- Cost: 1,632 × $600 = **$979,200** in lost revenue
-- Characteristics: Moderate tenure (34 months), moderate charges ($68)
-- Interpretation: "Quiet quitters" - customers who churn without obvious signals
+- Cost: 1,686 × $600 = **$1,011,600** in lost revenue
+- Characteristics: Mean tenure (scaled) = +0.29, MonthlyCharges (scaled) = -0.24
+- Interpretation: "Quiet quitters" — customers with higher-than-average tenure but lower charges
 
-**Total error cost:** $1,024,900
+**Total error cost at threshold=0.5:** $1,059,000
 
 ---
 
@@ -103,104 +102,104 @@ Actual  No   73.9%   26.1%    (74% correctly kept)
 
 ### Global Feature Importance
 
-**Top 10 Features by SHAP:**
+**Top 10 Features by Mean Absolute SHAP Value:**
 
 | Rank | Feature | Mean |SHAP| | Business Logic |
-|------|---------|------------|----------------|
-| 1 | Tenure | 0.1453 | ✅ Longer tenure = lower churn |
-| 2 | MonthlyCharges | 0.1287 | ✅ Higher bills = higher churn |
-| 3 | TotalCharges | 0.0892 | ✅ Customer lifetime value |
-| 4 | ContractType_Two Year | 0.0834 | ✅ Commitments reduce churn |
-| 5 | IsHighRisk | 0.0756 | ✅ Engineered feature works! |
-| 6 | Engagement | 0.0698 | ✅ Engaged customers stay |
-| 7 | TenureBucket_Veteran | 0.0621 | ✅ Long-time customers loyal |
-| 8 | ContractTenureMismatch | 0.0587 | ✅ Mismatch signals exit |
-| 9 | FinancialStress | 0.0535 | ✅ Payment issues predict churn |
-| 10 | PricePerService | 0.0498 | ✅ Value perception matters |
+|------|---------|------|----------------|
+| 1 | **ContractType_One Year** | **0.4701** | ✅ One-year commitment strongly reduces churn |
+| 2 | ContractType_Two Year | 0.4331 | ✅ Strongest commitment = lowest churn |
+| 3 | Tenure | 0.3916 | ✅ Longer tenure = lower churn |
+| 4 | MonthlyCharges | 0.3752 | ✅ Higher bills = higher churn |
+| 5 | Engagement | 0.2814 | ✅ Engaged customers stay |
+| 6 | FinancialStress | 0.2439 | ✅ Payment issues predict churn |
+| 7 | RecentSupportTickets | 0.2277 | ✅ Recent issues signal risk |
+| 8 | Complaints | 0.2000 | ✅ Dissatisfaction indicator |
+| 9 | ContractTenureMismatch | 0.0768 | ✅ Mismatch signals exit planning |
+| 10 | TotalCharges | 0.0533 | ✅ Customer lifetime value signal |
 
 **Key Insights:**
+- ✅ Contract type is the dominant predictor — customers **without long-term commitment** are highest risk
 - ✅ All top features align with business intuition
-- ✅ All 5 engineered features in top 10 (validates feature engineering)
-- ✅ No surprising or unexplainable features
+- ✅ RecentSupportTickets (rank 7, SHAP=0.228) is important but **not dominant** — no data leakage concern
+- ✅ Engineered features `FinancialStress` (rank 6) and `ContractTenureMismatch` (rank 9) are meaningful
 
 ---
 
 ### Individual Prediction Examples
 
-**Example 1: High-Risk Customer (96% churn probability)**
+**Example 1: High-Risk Customer (96.77% churn probability — Customer Index 2753)**
 
 ```
-Customer Profile:
-- Tenure: 3 months (new customer)
-- MonthlyCharges: $95 (high)
-- ContractType: Month-to-Month (no commitment)
-- InternetService: Fiber (expensive tier)
-- RecentSupportTickets: 1 (recent issue)
-
 SHAP Explanation:
-Base prediction:           65%
-+ Low tenure (+15%):       → 80%
-+ High charges (+12%):     → 92%
-+ Month-to-Month (+8%):    → 100% (capped at 96%)
-- Other features (-4%):    → 96%
+Base prediction (population average):  65%
++ Contributions from high-risk features → 96.77%
+
+Likely profile based on SHAP waterfall:
+- Month-to-Month contract (no commitment)
+- Low tenure (new customer)
+- High monthly charges
+- Low engagement score
 
 Business Interpretation:
-"New customer paying premium prices with no commitment 
-and recent support issues → extreme churn risk"
+"New customer with no commitment, high bill, and low usage → extreme churn risk"
 
 Recommended Action:
 - Immediate retention outreach
-- Offer contract discount (lock-in)
-- Proactive support follow-up
+- Offer contract lock-in discount
+- Proactive support check-in
 ```
 
-**Example 2: Low-Risk Customer (12% churn probability)**
+See: `evaluation_results/shap_waterfall_customer_2753.png`
+
+**Example 2: Low-Risk Customer (3.33% churn probability — Customer Index 6739)**
 
 ```
-Customer Profile:
-- Tenure: 48 months (4 years)
-- MonthlyCharges: $75 (moderate)
-- ContractType: Two Year (committed)
-- TotalCharges: $5,760 (high LTV)
-- Engagement: 1.2 (highly engaged)
-
 SHAP Explanation:
-Base prediction:           65%
-- Long tenure (-25%):      → 40%
-- Two-year contract (-18%): → 22%
-- High LTV (-8%):          → 14%
-- High engagement (-4%):   → 10%
-+ Moderate charges (+2%):  → 12%
+Base prediction (population average):  65%
+- Contributions from retention factors → 3.33%
+
+Likely profile based on SHAP waterfall:
+- Two-year contract (strong commitment)
+- Long tenure
+- Moderate monthly charges
+- High engagement score
 
 Business Interpretation:
-"Long-term, committed, engaged customer with 
-high lifetime value → very low risk"
+"Long-term, committed, engaged customer → very low risk"
 
 Recommended Action:
 - Standard service (no intervention needed)
-- VIP customer loyalty program
-- Upsell premium features
+- Consider upsell to premium features
 ```
+
+See: `evaluation_results/shap_waterfall_customer_6739.png`
 
 ---
 
 ### Feature Dependence Analysis
 
+SHAP dependence plots generated for the top 3 features:
+
+**ContractType_One Year Effect:**
+- Customers without a one-year contract: high positive SHAP (increases churn probability)
+- Customers with a one-year contract: large negative SHAP (strongly protects against churn)
+- One-year commitment is one of the clearest signals in the model
+
+See: `evaluation_results/shap_dependence_ContractType_One Year.png`
+
+**ContractType_Two Year Effect:**
+- Even stronger protective effect than one-year contracts
+- Two-year contract customers have the lowest churn probability of any segment
+
+See: `evaluation_results/shap_dependence_ContractType_Two Year.png`
+
 **Tenure Effect:**
-- 0-6 months: SHAP ≈ +0.15 (strong churn signal)
-- 6-12 months: SHAP ≈ +0.05 (moderate risk)
-- 12-24 months: SHAP ≈ 0.00 (neutral)
-- 24+ months: SHAP ≈ -0.15 to -0.25 (loyalty protection)
+- 0–12 months: positive SHAP (increases churn probability)
+- 12–24 months: near neutral
+- 24+ months: negative SHAP (loyalty protection)
+- Clear non-linear relationship captured by XGBoost ✓
 
-**Interpretation:** Clear non-linear relationship captured by XGBoost ✓
-
-**MonthlyCharges Effect:**
-- $0-$50: SHAP ≈ -0.05 (retention factor)
-- $50-$75: SHAP ≈ 0.00 (neutral)
-- $75-$100: SHAP ≈ +0.10 (churn factor)
-- $100+: SHAP ≈ +0.15 (strong churn signal)
-
-**Interpretation:** Price sensitivity threshold around $75 ✓
+See: `evaluation_results/shap_dependence_Tenure.png`
 
 ---
 
@@ -208,28 +207,19 @@ Recommended Action:
 
 **Calibration Curve Analysis:**
 
-**Brier Score:** 0.1534 (Good calibration)
+**Brier Score:** 0.1786 (Acceptable calibration)
 - Excellent: < 0.10
-- Good: 0.10 - 0.20 ✓ (You're here)
+- Good: 0.10–0.20 ✓ (You're here)
 - Poor: > 0.20
 
-**Calibration Performance:**
-
-| Predicted Bin | Predicted % | Actual % | Difference |
-|---------------|-------------|----------|------------|
-| 0-10% | 5% | 8% | +3% |
-| 10-20% | 15% | 18% | +3% |
-| 20-30% | 25% | 28% | +3% |
-| ... | ... | ... | ... |
-| 80-90% | 85% | 82% | -3% |
-| 90-100% | 95% | 91% | -4% |
-
 **Interpretation:**
-- Model is **slightly underconfident** (predicts lower than reality)
-- Maximum deviation: 4% (acceptable for business use)
-- Probabilities can be used for decision-making ✅
+- Model probabilities are usable for decision-making
+- Some overconfidence at high prediction ranges (common for XGBoost without Platt scaling)
+- Acceptable for business use without recalibration
 
-**Recommendation:** No recalibration needed. Probabilities trustworthy as-is.
+**Recommendation:** No recalibration required for initial deployment. Monitor in production.
+
+See: `evaluation_results/calibration_curve.png`
 
 ---
 
@@ -239,71 +229,70 @@ Recommended Action:
 
 | Category | Count | Percentage |
 |----------|-------|------------|
-| True Negative | 2,590 | 25.90% |
-| True Positive | 4,864 | 48.64% |
-| **False Positive** | **914** | **9.14%** |
-| **False Negative** | **1,632** | **16.32%** |
+| True Negative | 2,532 | 25.32% |
+| True Positive | 4,834 | 48.34% |
+| **False Positive** | **948** | **9.48%** |
+| **False Negative** | **1,686** | **16.86%** |
 
-**Overall Accuracy:** 74.39%
+**Overall Accuracy:** 73.66%
 
 ---
 
-### False Positive Analysis (914 cases)
+### False Positive Analysis (948 cases)
 
 **Profile of False Alarms:**
 
-| Attribute | Mean Value | Interpretation |
-|-----------|------------|----------------|
-| Tenure | 28.4 months | Moderate loyalty |
-| MonthlyCharges | $72.34 | Moderate spend |
-| TotalCharges | $2,145 | Moderate LTV |
-| Predicted Probability | 67% | Borderline high |
+| Attribute | Mean Value (scaled) | Interpretation |
+|-----------|---------------------|----------------|
+| Tenure | -0.16 | Slightly below-average tenure |
+| MonthlyCharges | +0.05 | Near-average charges |
+| TotalCharges | -0.07 | Slightly below-average LTV |
+| Predicted Probability | 66.33% | Borderline high |
 
-**Pattern:** Model flags "middle-ground" customers as churners when they won't actually leave.
+**Pattern:** Model flags borderline customers who have some churn indicators but won't actually leave.
 
 **Hypothesis:** These customers have:
-- Some churn indicators (moderate tenure)
-- But stronger loyalty signals not captured by features
-- Possibly: satisfaction, brand affinity, switching costs
+- Some churn indicators (moderate or below-average tenure)
+- But stronger loyalty signals not captured by features (satisfaction, brand affinity, switching costs)
 
 **Business Impact:**
-- Wasted campaigns: 914 × $50 = $45,700
-- But low cost relative to missed churners
+- Wasted campaigns: 948 × $50 = $47,400
+- Low cost relative to missed churners
 
 **Recommendation:**
-- Accept these false alarms as cost of doing business
-- Could A/B test campaign effectiveness on this segment
+- Accept these false alarms as cost of doing business at threshold=0.5
+- A/B test campaign effectiveness on this borderline segment
 
 ---
 
-### False Negative Analysis (1,632 cases)
+### False Negative Analysis (1,686 cases)
 
 **Profile of Missed Churners:**
 
-| Attribute | Mean Value | Interpretation |
-|-----------|------------|----------------|
-| Tenure | 34.2 months | Higher than FP |
-| MonthlyCharges | $68.12 | Lower than FP |
-| TotalCharges | $2,567 | Higher LTV |
-| Predicted Probability | 42% | Below threshold |
+| Attribute | Mean Value (scaled) | Interpretation |
+|-----------|---------------------|----------------|
+| Tenure | +0.29 | Higher-than-average tenure |
+| MonthlyCharges | -0.24 | Below-average charges |
+| TotalCharges | +0.10 | Near-average LTV |
+| Predicted Probability | 33.36% | Comfortably below threshold |
 
-**Pattern:** "Quiet quitters" - long-term customers who churn without obvious signals.
+**Pattern:** "Quiet quitters" — longer-tenure customers who churn without obvious signals and lower bills.
 
 **Hypothesis:** Missing features:
-- Competitor offers (can't observe)
+- Competitor offers (cannot observe)
 - Life events (relocation, financial hardship)
 - Service quality issues (not in data)
-- Declining engagement trend (need time-series)
+- Declining engagement trends (need time-series data)
 
 **Business Impact:**
-- Lost revenue: 1,632 × $600 = $979,200
-- **This is the dominant cost**
+- Lost revenue: 1,686 × $600 = $1,011,600
+- **This is the dominant cost driver**
 
 **Recommendations:**
-1. **Lower threshold** to 0.437 (catches 231 more churners)
-2. **Add temporal features** (engagement trend, usage decline)
+1. **Lower threshold** to 0.35–0.45 to catch more of these cases (see Threshold Optimization)
+2. **Add temporal features** (engagement trend, usage decline over time)
 3. **Survey campaigns** to understand "why" for this segment
-4. **Win-back campaigns** post-churn (cheaper than retention)
+4. **Win-back campaigns** post-churn (cheaper than retention for this segment)
 
 ---
 
@@ -315,36 +304,58 @@ Recommended Action:
 - False Positive cost: $50 (retention campaign)
 - False Negative cost: $600 (60% of $1,000 LTV lost)
 
-**Note:** False Negative cost assumes 40% of churners can be saved with campaign.
+**Note:** False Negative cost assumes 40% of churners can be saved with a campaign.
 
 ---
 
 ### Optimal Threshold Analysis
 
 **Current Threshold (0.5):**
-- Total Cost: $1,024,900
-- False Positives: 914
-- False Negatives: 1,632
-- Precision: 84.0%
-- Recall: 74.9%
+- Total Cost: $1,059,000
+- False Positives: 948
+- False Negatives: 1,686
+- Precision: 83.60%
+- Recall: 74.14%
 
-**Optimal Threshold (0.437):**
-- Total Cost: $1,064,100 *(verify from your actual output)*
-- False Positives: ~1,234 (+320)
-- False Negatives: ~1,401 (-231)
-- Precision: ~80.2%
-- Recall: ~78.5%
+**Mathematically Optimal Threshold (0.100):**
+- Total Cost: **$187,500** (mathematically minimised)
+- False Positives: 3,186 (+2,238)
+- False Negatives: 47 (-1,639)
+- Precision: 67.02%
+- Recall: 99.28%
 
-**Trade-off:**
-- Catch 231 more churners (+3.5% recall)
-- Accept 320 more false alarms
-- Net cost impact: +$39,200 *(if this is your result)*
+**⚠️ Important Note on the 0.100 Threshold:**
 
-**Recommendation:**
-- **If optimal threshold increases cost:** Stick with 0.5 (current is better)
-- **If optimal threshold decreases cost:** Use 0.437 (implement in production)
+The optimiser found that threshold=0.100 minimises cost given the cost parameters ($50 for FP, $600 for FN). At this extreme, the model flags nearly everyone as a churner. While mathematically correct when FN cost is 12× FP cost, this is **operationally impractical** — your retention team cannot run campaigns for 3,186 customers per 10K.
 
-**Action:** Verify cost parameters with business stakeholders.
+**Practical Recommendation:**
+- Use threshold **0.35–0.45** as a working range
+- At threshold=0.35, you catch significantly more churners while keeping campaigns manageable
+- Re-run threshold analysis with a maximum campaign budget constraint
+- Example: "We can run at most 1,500 campaigns per 10K customers" — this gives a practical upper bound on FPs which determines the threshold
+
+**Action:** Discuss cost parameters and operational constraints with business stakeholders before finalising threshold.
+
+See: `evaluation_results/threshold_optimization.png`
+
+Saved: `evaluation_results/optimal_threshold.json`
+
+```json
+{
+  "optimal_threshold": 0.1,
+  "default_threshold": 0.5,
+  "cost_fp": 50,
+  "cost_fn": 600,
+  "threshold": 0.1,
+  "total_cost": 187500.0,
+  "true_negatives": 294,
+  "false_positives": 3186,
+  "false_negatives": 47,
+  "true_positives": 6473,
+  "precision": 0.6702,
+  "recall": 0.9928
+}
+```
 
 ---
 
@@ -354,14 +365,15 @@ Recommended Action:
 
 | Criterion | Status | Evidence |
 |-----------|--------|----------|
-| **Performance** | ✅ Pass | ROC-AUC 0.8231 > 0.80 threshold |
+| **Performance** | ✅ Pass | ROC-AUC 0.8077 > 0.80 threshold |
 | **Interpretability** | ✅ Pass | SHAP explanations align with business logic |
-| **Calibration** | ✅ Pass | Brier=0.153 (good calibration) |
+| **Calibration** | ✅ Pass | Brier=0.1786 (acceptable calibration) |
 | **Error Understanding** | ✅ Pass | Error patterns identified and explained |
 | **Robustness** | ✅ Pass | Tested on 10K holdout (no overfitting) |
 | **Documentation** | ✅ Pass | Comprehensive evaluation completed |
+| **Threshold Strategy** | ⚠️ Pending | Needs business stakeholder discussion |
 
-**Overall Assessment:** ✅ **READY FOR PRODUCTION**
+**Overall Assessment:** ✅ **READY FOR PRODUCTION** (pending threshold decision)
 
 ---
 
@@ -381,18 +393,17 @@ Recommended Action:
 
 3. **Static Snapshot**
    - Features measured at single point in time
-   - Risk: Can't detect behavior changes
+   - Risk: Can't detect behaviour changes
    - Example: Can't see "customer was engaged, then stopped"
 
 4. **No External Data**
    - Missing: competitor prices, market conditions, economic factors
    - Risk: Churn driven by external factors is invisible
-   - Example: Can't predict "competitor offering 50% discount"
 
 5. **Synthetic Data**
    - Training data is generated, not real
-   - Risk: Real customer behavior may differ
-   - Mitigation: Generation based on realistic business logic
+   - Risk: Real customer behaviour may differ
+   - Mitigation: Generation (v3.1) based on realistic business logic and validated coefficients
 
 ---
 
@@ -416,7 +427,7 @@ Recommended Action:
 **Threshold Drift:**
 - Risk: Business costs change over time
 - Impact: Threshold is no longer optimal
-- Mitigation: Quarterly threshold re-optimization
+- Mitigation: Quarterly threshold re-optimisation
 
 ---
 
@@ -424,25 +435,25 @@ Recommended Action:
 
 ### Immediate Actions (Pre-Deployment)
 
-1. ✅ **Set up monitoring** (Milestone 4)
+1. ✅ **Decide on production threshold** with business stakeholders
+   - Mathematical optimum (0.10) is operationally impractical
+   - Recommended working range: 0.35–0.45
+   - Consider campaign budget constraint to derive threshold
+
+2. ✅ **Set up monitoring** (Milestone 4)
    - Track prediction distribution
    - Alert on data drift
    - Monitor performance metrics
 
-2. ✅ **Create deployment API** (Milestone 3)
+3. ✅ **Create deployment API** (Milestone 3)
    - FastAPI endpoint
    - Input validation
    - Error handling
 
-3. ✅ **Document production config**
-   - Classification threshold (0.5 or 0.437)
-   - Feature engineering pipeline version
-   - Model artifact location
-
-4. ✅ **Stakeholder sign-off**
-   - Present this evaluation report
-   - Get business approval on error trade-offs
-   - Confirm cost parameters
+4. ✅ **Document production config**
+   - Final classification threshold
+   - Feature engineering pipeline version (`models/feature_pipeline.pkl`)
+   - Model artifact location (`models/xgboost_conservative.pkl`)
 
 ---
 
@@ -451,12 +462,12 @@ Recommended Action:
 **Priority 1 (Next quarter):**
 - [ ] Add temporal features (engagement trend, usage decline)
 - [ ] Retrain on real customer data (if available)
-- [ ] A/B test threshold (0.5 vs 0.437)
+- [ ] A/B test threshold with retention team capacity constraint
 
 **Priority 2 (6 months):**
 - [ ] Survey "quiet quitters" segment (understand missing features)
-- [ ] Cross-validation for robust performance estimates
-- [ ] Probability recalibration (Platt scaling)
+- [ ] 5-fold cross-validation for robust performance estimates
+- [ ] Probability recalibration (Platt scaling) to reduce Brier score
 
 **Priority 3 (1 year):**
 - [ ] Customer segmentation (separate models per segment)
@@ -468,23 +479,25 @@ Recommended Action:
 ## Conclusion
 
 **Summary:**
-- XGBoost Conservative champion model thoroughly evaluated
-- Performance: ROC-AUC 0.8231 (meets all thresholds)
-- Interpretability: SHAP confirms business logic
-- Production ready with identified limitations
+- XGBoost Conservative champion model thoroughly evaluated on 10,000 holdout customers
+- Performance: ROC-AUC 0.8077 (meets production threshold ≥ 0.80)
+- Contract type is the dominant predictor — model captures business logic correctly
+- Production ready with identified limitations and pending threshold discussion
 
 **Key Strengths:**
-- ✅ Strong discrimination (ROC-AUC 0.82)
-- ✅ Well-calibrated probabilities
-- ✅ Explainable predictions
-- ✅ Aligned with business intuition
+- ✅ Strong discrimination (ROC-AUC 0.8077)
+- ✅ Acceptable probability calibration (Brier 0.1786)
+- ✅ Explainable predictions via SHAP
+- ✅ All top features aligned with business intuition
+- ✅ No data leakage detected (RecentSupportTickets is rank 7, not dominant)
 
 **Key Weaknesses:**
-- ⚠️ 16% False Negative rate (quiet quitters)
+- ⚠️ 16.86% False Negative rate (quiet quitters — longer tenure, lower charges)
 - ⚠️ Missing temporal patterns
 - ⚠️ Trained on synthetic data
+- ⚠️ Threshold strategy needs business input
 
-**Recommendation:** **APPROVE FOR PRODUCTION** with monitoring and continuous improvement plan.
+**Recommendation:** **APPROVE FOR PRODUCTION** after threshold discussion, with monitoring and continuous improvement plan.
 
 ---
 
@@ -493,45 +506,35 @@ Recommended Action:
 ### A. SHAP Visualizations
 
 All SHAP plots saved to `evaluation_results/`:
-- `shap_summary_plot.png` - Global importance
-- `shap_waterfall_customer_*.png` - Individual explanations
-- `shap_dependence_*.png` - Feature effects
+- `shap_summary_plot.png` — Global feature importance (beeswarm)
+- `shap_waterfall_customer_2753.png` — High-risk individual explanation (96.77% churn)
+- `shap_waterfall_customer_6739.png` — Low-risk individual explanation (3.33% churn)
+- `shap_waterfall_customer_658.png` — Additional individual explanation
+- `shap_waterfall_customer_7060.png` — Additional individual explanation
+- `shap_dependence_ContractType_One Year.png` — Feature effect plot
+- `shap_dependence_ContractType_Two Year.png` — Feature effect plot
+- `shap_dependence_Tenure.png` — Feature effect plot
 
 ### B. Error Analysis Dataset
 
 Full error analysis: `evaluation_results/error_analysis.csv`
 
 Columns:
-- All 24 features
-- `true_label` - Actual churn status
-- `predicted_label` - Model prediction
-- `predicted_proba` - Predicted probability
-- `correct` - Boolean (True/False)
-- `error_type` - Categorical (Correct/FP/FN)
+- All 24 features (scaled)
+- `true_label` — Actual churn status
+- `predicted_label` — Model prediction at threshold=0.5
+- `predicted_proba` — Predicted churn probability
+- `correct` — Boolean (True/False)
+- `error_type` — Categorical (Correct / False Positive / False Negative)
 
 ### C. Optimal Threshold Configuration
 
 Saved to: `evaluation_results/optimal_threshold.json`
 
-```json
-{
-  "optimal_threshold": 0.437,
-  "default_threshold": 0.5,
-  "cost_fp": 50,
-  "cost_fn": 600,
-  "total_cost": 1064100,
-  "true_positives": 5095,
-  "false_positives": 1234,
-  "false_negatives": 1401,
-  "true_negatives": 2270,
-  "precision": 0.8023,
-  "recall": 0.7845
-}
-```
+See Section "Threshold Optimization" above for full JSON and operational discussion.
 
 ---
 
-**Report Status:** ✅ Complete  
-**Approved For:** Production Deployment  
-**Next Milestone:** 2.4 - Model Registry Setup
-```
+**Report Status:** ✅ Complete
+**Approved For:** Production Deployment (pending threshold decision)
+**Next Milestone:** 2.4 — Model Registry Setup

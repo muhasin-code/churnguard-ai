@@ -2,7 +2,7 @@
 
 **Model Type:** Binary Classification (Churn Prediction)
 **Algorithm:** Logistic Regression with L2 Regularization
-**Training Date:** 2026-04-09
+**Training Date:** 2026-04-18
 **Model Version:** v1.0 (baseline)
 **Status:** ✅ Baseline Established
 
@@ -50,7 +50,7 @@ LogisticRegression(
 
 * **Source:** `data/processed/features_v1_test.csv`
 * **Samples:** 10,000 customers
-* **Churn Rate:** 64.96% (6,496 churned, 3,504 retained)
+* **Churn Rate:** 65.20% (6,520 churned, 3,480 retained)
 * **Split Strategy:** Stratified random split (80/20)
 
 ### Feature List
@@ -65,20 +65,20 @@ All 24 features were used (no feature selection applied).
 
 | Metric        | Train  | Test       |
 | ------------- | ------ | ---------- |
-| **Accuracy**  | 0.7315 | 0.7271     |
-| **Precision** | -      | 0.8292     |
-| **Recall**    | -      | 0.7303     |
-| **F1 Score**  | -      | 0.7766     |
-| **ROC-AUC**   | -      | **0.8003** |
-| **PR-AUC**    | -      | 0.8725     |
+| **Accuracy**  | 0.7252 | **0.7266**     |
+| **Precision** | —      | **0.8299**     |
+| **Recall**    | —      | **0.7304**     |
+| **F1 Score**  | —      | **0.7770**     |
+| **ROC-AUC**   | —      | **0.7944**     |
+| **PR-AUC**    | —      | **0.8670**     |
 
 ### Classification Report (Test)
 
 ```
               precision    recall  f1-score   support
 
-    No Churn       0.59      0.72      0.65      3504
-       Churn       0.83      0.73      0.78      6496
+    No Churn       0.59      0.72      0.65      3480
+       Churn       0.83      0.73      0.78      6520
 
     accuracy                           0.73     10000
    macro avg       0.71      0.73      0.71     10000
@@ -89,8 +89,8 @@ weighted avg       0.75      0.73      0.73     10000
 
 **Strengths:**
 
-* ROC-AUC of 0.8003 indicates strong predictive power
-* Good balance between precision (0.8292) and recall (0.7303)
+* ROC-AUC of 0.7944 indicates strong predictive power
+* Good balance between precision (0.8299) and recall (0.7304)
 * No overfitting (train ≈ test performance)
 
 **Limitations:**
@@ -106,14 +106,14 @@ weighted avg       0.75      0.73      0.73     10000
 ```
                   Predicted
                 No      Yes
-Actual  No    2523    981
-        Yes   1753    4743
+Actual  No    2518     962
+        Yes   1762    4758
 ```
 
 ### Business Impact
 
-* **False Negatives (~1,753):** Missed churners → revenue loss risk
-* **False Positives (~981):** Unnecessary retention actions → cost overhead
+* **False Negatives (~1,762):** Missed churners → revenue loss risk
+* **False Positives (~962):** Unnecessary retention actions → cost overhead
 
 ---
 
@@ -147,9 +147,9 @@ Actual  No    2523    981
 
 ### Business Requirements
 
-* ROC-AUC ≥ 0.75 → ✅ 0.8003
-* Recall ≥ 0.70 → ✅ 0.7303
-* Precision ≥ 0.60 → ✅ 0.8292
+* ROC-AUC ≥ 0.75 → ✅ 0.7944
+* Recall ≥ 0.70 → ✅ 0.7304
+* Precision ≥ 0.60 → ✅ 0.8299
 
 ### Technical Requirements
 
@@ -166,7 +166,7 @@ Actual  No    2523    981
 | ---------------------- | ---------- | ---------- |
 | Always predict "Churn" | ~0.65      | 0.50       |
 | Random prediction      | 0.50       | 0.50       |
-| Logistic Regression    | **0.7271** | **0.8003** |
+| Logistic Regression    | **0.7266** | **0.7944** |
 
 ---
 
@@ -206,7 +206,7 @@ Actual  No    2523    981
 ### Model Artifacts
 
 * **Model Path:** `models/baseline_logistic_regression.pkl`
-* **MLflow Run:** `logistic-baseline-20260409-193544`
+* **MLflow Run:** `logistic-baseline-20260418-200354`
 * **Dependencies:** scikit-learn==1.3.0
 
 ### Inference Performance
@@ -266,7 +266,8 @@ python src/models/train_baseline.py
 
 | Version | Date       | Changes                                   | Author  |
 | ------- | ---------- | ----------------------------------------- | ------- |
-| v1.0    | 2026-04-09 | Updated metrics, features, and MLflow run | Muhasin |
+| v1.0    | 2026-04-09 | Initial draft | Muhasin |
+| v1.1    | 2026-04-18 | Updated metrics to actual run values (ROC-AUC 0.7944), corrected test set distribution, updated MLflow run name | Muhasin |
 
 ---
 

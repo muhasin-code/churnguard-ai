@@ -1,7 +1,7 @@
 # Data Contract: Telecom Customer Churn Dataset
 
 **Version:** 2.0  
-**Last Updated:** 2026-01-15  
+**Last Updated:** 2026-04-19  
 **Owner:** ChurnGuard AI Team
 
 ---
@@ -30,7 +30,7 @@ This document defines the **data contract** for raw customer churn data entering
 | `Gender` | category | No | Customer gender | IN ('Male', 'Female') |
 | `Age` | int64 | No | Customer age in years | 18 ≤ age ≤ 100 |
 | `Tenure` | int64 | No | Months as customer | ≥ 0 |
-| `ContractType` | category | No | Contract commitment | IN ('Month-to-Month', 'One year', 'Two year') |
+| `ContractType` | category | No | Contract commitment | IN ('Month-to-Month', 'One Year', 'Two Year') |
 | `InternetService` | category | No | Internet service type | IN ('DSL', 'Fiber', 'No Service') |
 | `MonthlyCharges` | float64 | No | Current monthly bill (USD) | 0 < value < 500 |
 | `TotalCharges` | float64 | No | Lifetime charges (USD) | ≥ 0 |
@@ -225,7 +225,7 @@ great_expectations docs build
   "Gender": "Female",
   "Age": 32,
   "Tenure": 18,
-  "ContractType": "One year",
+  "ContractType": "One Year",
   "InternetService": "Fiber",
   "MonthlyCharges": 78.50,
   "TotalCharges": 1413.00,
@@ -249,3 +249,4 @@ great_expectations docs build
 |---------|------|---------|--------|
 | 1.0 | 2026-01-01 | Initial contract | You |
 | 2.0 | 2026-01-15 | Fixed negative values, enforced dtypes, added GX validation | You |
+| 2.1 | 2026-04-19 | Fixed ContractType casing ('One year' → 'One Year', 'Two year' → 'Two Year') to match v3.1 data generation | Muhasin |

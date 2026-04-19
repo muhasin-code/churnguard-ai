@@ -202,7 +202,7 @@ financial_stress = late_payments + (complaints * 0.5)
 
 ## Implementation Results
 
-**Date Completed:** 2026-01-15
+**Date Completed:** 2026-04-18
 
 ### Feature Counts
 
@@ -210,9 +210,14 @@ financial_stress = late_payments + (complaints * 0.5)
 |-------|-------|---------|
 | Raw features | 16 | After dropping target |
 | Dropped features | 4 | CustomerID, CallMinutes, DataUsage, ChurnProbability |
-| Engineered features | 5 | TenureBuckets(4), PricePerService, IsHighRisk, ContractMismatch, FinancialStress |
-| One-hot encoded | 11 | From ContractType(2), InternetService(2), PaymentMethod(3), Gender(1), TenureBuckets(4) |
-| **Final features** | **28** | Ready for model training |
+| Engineered features | 5 sub-features | TenureBuckets(4 bins), PricePerService, IsHighRisk, ContractMismatch, FinancialStress |
+| One-hot encoded | 12 | From ContractType(2), InternetService(2), PaymentMethod(3), Gender(1), TenureBuckets(4) |
+| **Final features** | **24** | Ready for model training |
+
+**Note on feature count:** The original estimate was 28 features. The actual count is 24 because
+one-hot encoding with `drop_first=True` produces k−1 columns per categorical feature (e.g. a 3-category
+feature produces 2 columns, not 3). This is correct and expected behaviour — it avoids the
+dummy variable trap for linear models.
 
 ### Top Features by Correlation with Churn
 
@@ -234,10 +239,9 @@ financial_stress = late_payments + (complaints * 0.5)
 
 ### Files Generated
 
-- `data/processed/features_v1_train.csv` (40,000 rows, 29 columns)
-- `data/processed/features_v1_test.csv` (10,000 rows, 29 columns)
+- `data/processed/features_v1_train.csv` (40,000 rows, 25 columns — 24 features + target)
+- `data/processed/features_v1_test.csv` (10,000 rows, 25 columns — 24 features + target)
 - `models/feature_pipeline.pkl` (fitted ChurnFeatureEngineer)
-- `data/processed/feature_importance_v1.csv` (template for model training)
 
 ### Next Iteration Ideas
 
