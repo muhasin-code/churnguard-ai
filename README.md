@@ -197,20 +197,55 @@ All plots saved to `evaluation_results/`:
 
 ---
 
+## Model Registry & Deployment
+
+**Current Production Model:** churnguard-classifier v1  
+**Performance:** ROC-AUC 0.8077 | Accuracy 73.66% | Precision 83.60%  
+**Deployment Stage:** Production  
+**Last Updated:** 2026-04-18
+
+### Registry Workflow
+
+```
+Train → Register → Validate (Staging) → Deploy (Production)
+```
+
+**Registry contains:**
+- ✅ Version control for models
+- ✅ Performance metrics tracking
+- ✅ Deployment stage management (Staging/Production)
+- ✅ Model lineage and metadata
+- ✅ Rollback capability
+
+**View in MLflow UI:** http://localhost:5000/#/models/churnguard-classifier
+
+### Quick Commands
+
+```bash
+# Register champion model
+python scripts/register_champion.py
+
+# Validate staging model
+python scripts/validate_staging_model.py
+
+# Promote to production
+python scripts/promote_to_production.py
+
+# Load production model
+from src.models.registry_utils import ModelRegistry
+registry = ModelRegistry()
+model = registry.load_model("churnguard-classifier", stage="Production")
+```
+
+**Full documentation:** [Model Registry Guide](docs/model_registry_guide.md)
+
 ## Project Status
 
-🔄 **In Progress** — Phase II: Model Development & Experiment Tracking
+🔄 **In Progress** — Phase III: API Development
 
 ## Milestones
-- [x] Project Setup (environment, DVC, Great Expectations)
-- [x] Data Pipeline (synthetic data v3.1, feature engineering)
-- [x] MLflow Setup & Baseline Model
-- [x] Model Experimentation (11 models, champion selected)
-- [x] Model Evaluation & Interpretability (SHAP, error analysis, calibration)
-- [ ] **Model Registry Setup** ← Next
-- [ ] API Development (FastAPI)
-- [ ] Deployment (Docker)
-- [ ] Production Monitoring (Evidently)
+- [ ] FastAPI Deployment
+- [ ] Containerization
 
 ---
 
