@@ -241,11 +241,14 @@ model = registry.load_model("churnguard-classifier", stage="Production")
 
 ## Project Status
 
-🔄 **In Progress** — Phase III: API Development
+🔄 **In Progress** — Phase III: Model Deployment - API Deployment
 
 ## Milestones
-- [ ] FastAPI Deployment
-- [ ] Containerization
+- [ ] 3.1: FastAPI Project Setup
+- [ ] 3.2: Model Loading & Production Endpoint
+- [ ] 3.3: Input Validation & Error Handling
+- [ ] 3.4: Docker Containerization
+- [ ] 3.5: API Documentation & Testing
 
 ---
 
