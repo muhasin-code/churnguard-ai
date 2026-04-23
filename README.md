@@ -252,25 +252,68 @@ model = registry.load_model("churnguard-classifier", stage="Production")
 
 ---
 
+
+## Installation
+
+### Prerequisites
+- Python 3.10+
+- pip
+- virtualenv (recommended)
+
+### Setup
+
+```bash
+# Clone repository
+git clone https://github.com/muhasin-code/churnguard-ai.git
+cd churnguard-ai
+
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Verify installation
+python -c "import mlflow, fastapi, xgboost; print('✅ Installation successful')"
+```
+
+### Dependency Management
+
+**Files:**
+- `requirements.txt` - Main dependency file (install this)
+- `requirements-frozen.txt` - Exact versions (for reproducibility)
+
+**Update dependencies:**
+```bash
+# Add new package
+echo "new-package==1.0.0" >> requirements.txt
+pip install -r requirements.txt
+
+# Lock versions
+pip freeze > requirements-frozen.txt
+```
+
+**Reproduce exact environment:**
+```bash
+pip install -r requirements-frozen.txt
+```
+
+
 ## Quick Start
 
 ```bash
-# 1. Clone and set up environment
-git clone <repo-url>
-cd churnguard-ai
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-
-# 2. Generate data
+# 1. Generate data
 python scripts/generate_synthetic_data_v3.1.py
 
-# 3. Run feature engineering
+# 2. Run feature engineering
 python scripts/engineer_features.py
 
-# 4. Train models
+# 3. Train models
 python src/models/train_models.py
 
-# 5. Evaluate champion
+# 4. Evaluate champion
 python scripts/save_champion_from_mlflow.py
 python scripts/evaluate_champion.py
 ```
