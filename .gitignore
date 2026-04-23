@@ -46,7 +46,7 @@ Thumbs.db
 
 # Misc
 project-plan.md
-requirements-lock.txt
+requirements-frozen.txt
 todo.txt
 setup.py
 *.egg-info
