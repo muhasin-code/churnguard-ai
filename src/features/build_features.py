@@ -24,6 +24,48 @@ from src.features.feature_engineers import (
     FinancialStressScore
 )
 
+_DISK_CATEGORICAL_CACHE: Optional[dict] = None
+
+
+def _disk_categorical_features() -> dict:
+    """
+    Load categorical_features from configs/feature_config.yaml when present.
+
+    Pickled pipelines embed a copy of categorical config from training time; that
+    copy can drift from the repo YAML or use different string casing. For
+    inference we prefer the checked-in YAML so API values like 'Two Year' align
+    with category lists and one-hot column names match the registered model.
+    """
+    global _DISK_CATEGORICAL_CACHE
+    if _DISK_CATEGORICAL_CACHE is not None:
+        return _DISK_CATEGORICAL_CACHE
+    path = Path(__file__).resolve().parents[2] / "configs" / "feature_config.yaml"
+    if not path.exists():
+        _DISK_CATEGORICAL_CACHE = {}
+        return _DISK_CATEGORICAL_CACHE
+    with open(path, "r", encoding="utf-8") as f:
+        full = yaml.safe_load(f) or {}
+    _DISK_CATEGORICAL_CACHE = full.get("categorical_features") or {}
+    return _DISK_CATEGORICAL_CACHE
+
+
+def _one_hot_spec_merged(col: str, spec: dict) -> Tuple[list, bool]:
+    """
+    Categories and drop_first for a one-hot column.
+
+    Categories are sorted alphabetically so ``drop_first`` matches training:
+    ``pd.get_dummies(..., sort=True)`` orders dummy columns lexically, so the
+    dropped baseline is the lexicographically first label (e.g. ``Cash`` for
+    PaymentMethod), not the first entry in YAML.
+    """
+    disk_oh = (_disk_categorical_features() or {}).get("one_hot") or {}
+    disk_spec = disk_oh.get(col) or {}
+    raw = list(disk_spec.get("categories") or spec.get("categories") or [])
+    drop_first = disk_spec.get("drop_first", spec.get("drop_first", True))
+    if raw:
+        raw = sorted(raw)
+    return raw, drop_first
+
 
 class ChurnFeatureEngineer:
     """
@@ -321,11 +363,21 @@ class CategoricalEncoder(BaseTransformer):
         if 'one_hot' in self.config:
             for col, spec in self.config['one_hot'].items():
                 if col in X.columns:
-                    dummies = pd.get_dummies(
-                        X[col],
-                        prefix=col,
-                        drop_first=spec.get('drop_first', True)
-                    )
+                    categories, drop_first = _one_hot_spec_merged(col, spec)
+                    if categories:
+                        s = pd.Categorical(X[col], categories=categories)
+                        col_series = pd.Series(s, index=X.index, name=col)
+                        dummies = pd.get_dummies(
+                            col_series,
+                            prefix=col,
+                            drop_first=drop_first,
+                        )
+                    else:
+                        dummies = pd.get_dummies(
+                            X[col],
+                            prefix=col,
+                            drop_first=drop_first,
+                        )
                     # Convert bool columns to int for ML compatibility
                     dummies = dummies.astype(int)
                     X = pd.concat([X, dummies], axis=1)
@@ -344,9 +396,9 @@ class CategoricalEncoder(BaseTransformer):
             elif 'one_hot' in self.config and col in self.config['one_hot']:
                 # Will become multiple columns
                 spec = self.config['one_hot'][col]
-                categories = spec['categories']
-                if spec.get('drop_first', True):
-                    categories = categories[1:]  # Drop first category
+                categories, drop_first = _one_hot_spec_merged(col, spec)
+                if drop_first and categories:
+                    categories = categories[1:]
                 output_features.extend([f"{col}_{cat}" for cat in categories])
             else:
                 output_features.append(col)  # Not encoded, keep as-is

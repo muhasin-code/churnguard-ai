@@ -33,6 +33,7 @@ categorical_features:
       drop_first: true
     
     PaymentMethod:
+      # List is semantic only; at train/infer, drop_first removes the lexicographically first label (Cash).
       categories: ["Credit Card", "Debit Card", "UPI", "Cash"]
       drop_first: true
 
