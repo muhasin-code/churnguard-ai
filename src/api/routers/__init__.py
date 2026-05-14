@@ -1,7 +1,7 @@
 """API routers."""
 
 
-from . import health
+from . import health, predict
 
 
-__all__ = ["health"]
+__all__ = ["health", "predict"]

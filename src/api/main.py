@@ -41,9 +41,23 @@ async def lifespan(app: FastAPI):
     api_logger.info(f"Model: {settings.model_name} ({settings.model_stage})")
     api_logger.info(f"MLflow URI: {settings.mlflow_tracking_uri}")
 
-    # TODO (Milestone 6.2): Load model from MLflow Registry
-    # model_loader = ModelLoader()
-    # app.state.model = await model_loader.load_model()
+    # Load model and feature pipeline
+    try:
+        from src.api.services.model_loader import model_loader
+
+        api_logger.info("Loading ML model and feature pipeline...")
+        model = model_loader.get_model()
+        pipeline = model_loader.get_feature_pipeline()
+
+        api_logger.info("Model and pipeline loaded successfully")
+
+        # Store in app state for access in endpoints
+        app.state.model_loader = model_loader
+    
+    except Exception as e:
+        api_logger.error(f"Failed to load model: {str(e)}")
+        api_logger.error("   API will not be able to serve predictions")
+        raise
 
     api_logger.info("Startup complete")
 
@@ -51,7 +65,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     api_logger.info("Shutting down API server...")
-    # TODO: Clean up resources (close DB connections, etc.)
+    # Clean up resources if needed
     api_logger.info("Shutdown complete")
 
 
@@ -188,9 +202,9 @@ async def general_exception_handler(request: Request, exc: Exception):
 # Health check endpoints
 app.include_router(health.router)
 
-# TODO (Milestone 6.2): Prediction endpoints
-# from src.api.routers import predict
-# app.include_router(predict.router)
+# Prediction endpoints
+from src.api.routers import predict
+app.include_router(predict.router)
 
 
 # ========================================================================
@@ -221,7 +235,9 @@ async def root():
             "health": "/health",
             "readiness": "/health/ready",
             "liveness": "/health/live",
-            # TODO: Add prediction endpoints in Milestone 6.2
+            "predict_single": "/predict",
+            "predict_batch": "/predict/batch",
+            "model_info": "/predict/model-info"
         }
     }
 
