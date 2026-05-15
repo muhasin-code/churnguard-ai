@@ -29,7 +29,7 @@ def main():
     # =========================================================================
     
     # TODO: Update this with your actual champion run ID
-    champion_run_id = "20e971f66ba64291a8a6f6763418f5ed" # cgb-conservative
+    champion_run_id = "458085c58805442c994a14dfae4e18cf" # xgb-conservative
 
     model_name = "churnguard-classifier"
     data_version = "v3.1"
