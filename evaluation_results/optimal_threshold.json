@@ -1,14 +1,14 @@
 {
-  "optimal_threshold": 0.1,
+  "optimal_threshold": 0.04,
   "default_threshold": 0.5,
   "cost_fp": 50,
   "cost_fn": 600,
-  "threshold": 0.1,
-  "total_cost": 187500.0,
-  "true_negatives": 294,
-  "false_positives": 3186,
-  "false_negatives": 47,
-  "true_positives": 6473,
-  "precision": 0.6701521896676674,
-  "recall": 0.9927914110429448
+  "threshold": 0.04,
+  "total_cost": 173300.0,
+  "true_negatives": 14,
+  "false_positives": 3466,
+  "false_negatives": 0,
+  "true_positives": 6520,
+  "precision": 0.6529140797115962,
+  "recall": 1.0
 }
