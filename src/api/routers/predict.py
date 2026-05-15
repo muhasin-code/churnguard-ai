@@ -17,6 +17,11 @@ from src.api.models import (
 from src.api.services.predictor import prediction_service
 from src.api.config import settings
 from src.api.utils.logging import api_logger
+from src.api.exceptions import (
+    PredictionError,
+    FeaturePreprocessingError,
+    BatchSizeExceededError
+)
 
 
 router = APIRouter(
@@ -83,23 +88,11 @@ async def predict_single(customer: CustomerData):
     """
     api_logger.info(f"POST /predict - Customer: {customer.customer_id}")
     
-    try:
-        # Generate prediction
-        result = prediction_service.predict_single(customer)
-        
-        return result
-        
-    except Exception as e:
-        api_logger.error(f"Prediction failed for {customer.customer_id}: {str(e)}")
-        
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": "PredictionError",
-                "message": f"Failed to generate prediction: {str(e)}",
-                "customer_id": customer.customer_id
-            }
-        )
+    # Custom exceptions are caught by exception handlers
+    # No try-except needed here - let them propagate
+    result = prediction_service.predict_single(customer)
+    
+    return result
 
 
 @router.post(
@@ -163,32 +156,15 @@ async def predict_batch(request: BatchPredictionRequest):
     
     # Validate batch size
     if len(request.customers) > settings.batch_size_limit:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "error": "BatchSizeExceeded",
-                "message": f"Batch size ({len(request.customers)}) exceeds limit ({settings.batch_size_limit})",
-                "limit": settings.batch_size_limit
-            }
+        raise BatchSizeExceededError(
+            batch_size=len(request.customers),
+            limit=settings.batch_size_limit
         )
     
-    try:
-        # Generate predictions
-        result = prediction_service.predict_batch(request.customers)
-        
-        return BatchPredictionResponse(**result)
-        
-    except Exception as e:
-        api_logger.error(f"Batch prediction failed: {str(e)}")
-        
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "error": "BatchPredictionError",
-                "message": f"Failed to generate batch predictions: {str(e)}",
-                "batch_size": len(request.customers)
-            }
-        )
+    # Custom exceptions are caught by exception handlers
+    result = prediction_service.predict_batch(request.customers)
+    
+    return BatchPredictionResponse(**result)
 
 
 @router.get(

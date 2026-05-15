@@ -6,7 +6,7 @@ FastAPI uses these for automatic validation, serialization, and document generat
 """
 
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, root_validator
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -184,25 +184,9 @@ class CustomerData(BaseModel):
         le=2.0
     )
 
-    # Validators
-    @validator('total_charges')
-    def validate_total_charges(cls, v, values):
-        """
-        Validate total_charges is consistent with tenure and monthly_charges.
-
-        Total charges should be approximately tenure * monthly_charges.
-        Allow some variance for discounts/promotions.
-        """
-        if 'tenure' in values and 'monthly_charges' in values:
-            expected_min = values['tenure'] * values['monthly_charges'] * 0.5
-            expected_max = values['tenure'] * values['monthly_charges'] * 1.5
-
-            if not (expected_min <= v <= expected_max):
-                # Warning: Don't raise error, just log
-                # In production, you might want to flag this
-                pass
-        
-        return v
+    # =========================================================================
+    # VALIDATORS - Business Logic & Data Quality
+    # =========================================================================
     
     @validator('age')
     def validate_age_realistic(cls, v):
@@ -212,6 +196,151 @@ class CustomerData(BaseModel):
         if v > 100:
             raise ValueError("Age seems unrealistic (>100)")
         return v
+    
+    @validator('tenure')
+    def validate_tenure_realistic(cls, v):
+        """Validate tenure is realistic."""
+        if v < 0:
+            raise ValueError("Tenure cannot be negative")
+        if v > 100:
+            raise ValueError("Tenure exceeds 100 months (8+ years) - seems unrealistic")
+        return v
+    
+    @validator('monthly_charges')
+    def validate_monthly_charges(cls, v):
+        """Validate monthly charges are in realistic range."""
+        if v <= 0:
+            raise ValueError("Monthly charges must be positive")
+        if v > 200:
+            raise ValueError("Monthly charges exceed $200 - seems unrealistic for telecom")
+        return v
+    
+    @validator('total_charges')
+    def validate_total_charges(cls, v, values):
+        """
+        Validate total_charges is consistent with tenure and monthly_charges.
+        
+        Expected: total_charges ≈ tenure × monthly_charges
+        Allow 50-150% variance for promotions/discounts.
+        """
+        if 'tenure' in values and 'monthly_charges' in values:
+            tenure = values['tenure']
+            monthly = values['monthly_charges']
+            
+            if tenure == 0:
+                # New customer - total charges should be near zero
+                if v > monthly * 2:
+                    raise ValueError(
+                        f"New customer (tenure=0) but total_charges=${v:.2f} is too high. "
+                        f"Expected < ${monthly * 2:.2f}"
+                    )
+            else:
+                # Existing customer - check consistency
+                expected_min = tenure * monthly * 0.5
+                expected_max = tenure * monthly * 1.5
+                
+                if v < expected_min:
+                    raise ValueError(
+                        f"total_charges=${v:.2f} is too low. "
+                        f"Expected ${expected_min:.2f} - ${expected_max:.2f} "
+                        f"(tenure={tenure} months × monthly_charges=${monthly:.2f})"
+                    )
+                
+                if v > expected_max:
+                    raise ValueError(
+                        f"total_charges=${v:.2f} is too high. "
+                        f"Expected ${expected_min:.2f} - ${expected_max:.2f} "
+                        f"(tenure={tenure} months × monthly_charges=${monthly:.2f})"
+                    )
+        
+        return v
+    
+    @validator('call_minutes')
+    def validate_call_minutes(cls, v):
+        """Validate call minutes are realistic."""
+        if v < 0:
+            raise ValueError("Call minutes cannot be negative")
+        if v > 10000:
+            raise ValueError("Call minutes exceed 10,000/month - seems unrealistic")
+        return v
+    
+    @validator('data_usage')
+    def validate_data_usage(cls, v):
+        """Validate data usage is realistic."""
+        if v < 0:
+            raise ValueError("Data usage cannot be negative")
+        if v > 1000:
+            raise ValueError("Data usage exceeds 1TB/month - seems unrealistic for consumer")
+        return v
+    
+    @validator('engagement')
+    def validate_engagement_range(cls, v):
+        """Validate engagement score is in expected range."""
+        if v < 0:
+            raise ValueError("Engagement score cannot be negative")
+        if v > 2:
+            raise ValueError("Engagement score exceeds maximum (2.0)")
+        return v
+    
+    @validator('complaints', 'late_payments')
+    def validate_non_negative_counts(cls, v, field):
+        """Validate count fields are non-negative."""
+        if v < 0:
+            raise ValueError(f"{field.name} cannot be negative")
+        return v
+    
+    @root_validator
+    def validate_cross_field_consistency(cls, values):
+        """
+        Validate cross-field business logic.
+        
+        Checks:
+        1. Contract type vs tenure alignment
+        2. High charges with low engagement (churn indicator)
+        3. Service usage consistency
+        """
+        # Extract values
+        tenure = values.get('tenure', 0)
+        contract_type = values.get('contract_type', '')
+        monthly_charges = values.get('monthly_charges', 0)
+        engagement = values.get('engagement', 0)
+        internet_service = values.get('internet_service', '')
+        data_usage = values.get('data_usage', 0)
+        
+        # Check 1: Contract type vs tenure alignment
+        if contract_type == 'Two Year' and tenure < 3:
+            # Warning: Two-year contract but very new customer
+            # Don't raise error - this is possible (new signup)
+            pass
+        
+        if contract_type == 'Month-to-Month' and tenure > 60:
+            # Unusual: 5+ years but still month-to-month
+            # Don't raise error - customer choice
+            pass
+        
+        # Check 2: High charges with low engagement
+        if monthly_charges > 80 and engagement < 0.5:
+            # Warning: Paying a lot but barely using service
+            # Don't raise error - this is a legitimate churn signal
+            pass
+        
+        # Check 3: Service usage consistency
+        if internet_service == 'No Service' and data_usage > 0:
+            raise ValueError(
+                f"internet_service='No Service' but data_usage={data_usage} GB. "
+                f"Data usage should be 0 if no internet service."
+            )
+        
+        # Check 4: Engagement calculation consistency
+        # Engagement is derived from CallMinutes and DataUsage
+        # Basic sanity check: if both are 0, engagement should be low
+        call_minutes = values.get('call_minutes', 0)
+        if call_minutes == 0 and data_usage == 0 and engagement > 1.5:
+            # Warning: No usage but high engagement score
+            # Don't raise error - engagement might be calculated differently
+            pass
+        
+        return values
     
     class Config:
         """Pydantic model configuration."""

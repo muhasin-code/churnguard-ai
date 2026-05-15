@@ -18,6 +18,10 @@ from src.api.models import (
 from src.api.services.model_loader import model_loader
 from src.api.config import settings
 from src.api.utils.logging import api_logger
+from src.api.exceptions import (
+    PredictionError,
+    FeaturePreprocessingError
+)
 
 
 class PredictionService:
@@ -155,15 +159,7 @@ class PredictionService:
     # =========================================================================
     
     def predict_single(self, customer: CustomerData) -> PredictionResponse:
-        """
-        Predict churn for a single customer.
-        
-        Args:
-            customer: Validated customer data
-            
-        Returns:
-            Prediction response
-        """
+        """Predict churn for a single customer."""
         api_logger.info(f"Predicting churn for customer: {customer.customer_id}")
         
         start_time = time.time()
@@ -173,11 +169,31 @@ class PredictionService:
             df, customer_id = self.customer_to_dataframe(customer)
             
             # Preprocess features
-            X = self.preprocess_features(df)
+            try:
+                X = self.preprocess_features(df)
+            except Exception as e:
+                raise FeaturePreprocessingError(
+                    message=f"Feature preprocessing failed: {str(e)}",
+                    customer_id=customer_id,
+                    details={
+                        "input_shape": df.shape,
+                        "input_columns": list(df.columns)
+                    }
+                )
             
             # Generate prediction
-            prediction = self.model.predict(X)[0]  # 0 or 1
-            probability = self.model.predict_proba(X)[0, 1]  # Probability of churn (class 1)
+            try:
+                prediction = self.model.predict(X)[0]
+                probability = self.model.predict_proba(X)[0, 1]
+            except Exception as e:
+                raise PredictionError(
+                    message=f"Model prediction failed: {str(e)}",
+                    customer_id=customer_id,
+                    details={
+                        "feature_shape": X.shape,
+                        "model_type": type(self.model).__name__
+                    }
+                )
             
             # Classify risk level
             risk_level = self._classify_risk(probability)
@@ -205,9 +221,16 @@ class PredictionService:
             
             return response
             
+        except (PredictionError, FeaturePreprocessingError):
+            # Re-raise custom exceptions
+            raise
         except Exception as e:
-            api_logger.error(f"Prediction failed for {customer.customer_id}: {str(e)}")
-            raise RuntimeError(f"Prediction failed: {str(e)}")
+            # Wrap unexpected exceptions
+            api_logger.error(f"Unexpected error predicting for {customer.customer_id}: {str(e)}")
+            raise PredictionError(
+                message=f"Unexpected prediction error: {str(e)}",
+                customer_id=customer.customer_id
+            )
     
     def predict_batch(self, customers: List[CustomerData]) -> Dict[str, Any]:
         """
@@ -272,9 +295,18 @@ class PredictionService:
                 "processing_time_seconds": round(processing_time, 3)
             }
             
+        except (PredictionError, FeaturePreprocessingError):
+            # Re-raise custom exceptions
+            raise
         except Exception as e:
-            api_logger.error(f"Batch prediction failed: {str(e)}")
-            raise RuntimeError(f"Batch prediction failed: {str(e)}")
+            # Wrap unexpected exceptions
+            api_logger.error(f"Unexpected batch prediction error: {str(e)}")
+            raise PredictionError(
+                message=f"Batch prediction failed: {str(e)}",
+                details={
+                    "batch_size": len(customers)
+                }
+            )
     
     # =========================================================================
     # Risk Classification
