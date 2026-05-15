@@ -86,11 +86,30 @@ async def predict_single(customer: CustomerData):
     }
 ```
     """
-    api_logger.info(f"POST /predict - Customer: {customer.customer_id}")
+    # Log request details (after validation passes)
+    api_logger.info(
+        f"Prediction request",
+        extra={
+            "customer_id": customer.customer_id,
+            "contract_type": customer.contract_type,
+            "tenure": customer.tenure,
+            "monthly_charges": customer.monthly_charges
+        }
+    )
     
-    # Custom exceptions are caught by exception handlers
-    # No try-except needed here - let them propagate
+    # Generate prediction
     result = prediction_service.predict_single(customer)
+    
+    # Log response
+    api_logger.info(
+        f"Prediction response",
+        extra={
+            "customer_id": result.customer_id,
+            "churn_prediction": result.churn_prediction,
+            "churn_probability": result.churn_probability,
+            "risk_level": result.risk_level
+        }
+    )
     
     return result
 

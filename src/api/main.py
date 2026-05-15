@@ -161,10 +161,15 @@ async def log_requests_middleware(request: Request, call_next):
     Log all requests and responses for audit trail.
     
     Logs:
-    - Request: method, path, client IP, body (for POST)
+    - Request: method, path, client IP, headers
     - Response: status code, processing time
+    
+    NOTE: We do NOT read request.body() here because it would
+    consume the stream and cause FastAPI validation to hang.
     """
-    # Log request
+    import time
+    
+    # Log request metadata (without body)
     client_ip = request.client.host if request.client else "unknown"
     
     request_log = {
@@ -173,25 +178,6 @@ async def log_requests_middleware(request: Request, call_next):
         "client_ip": client_ip,
         "user_agent": request.headers.get("user-agent", "unknown")
     }
-    
-    # Log request body for POST/PUT (but not for large batches)
-    if request.method in ["POST", "PUT"]:
-        # Read body (careful - can only read once!)
-        body = await request.body()
-        
-        # Log body if small enough
-        if len(body) < 5000:  # < 5KB
-            try:
-                import json
-                body_json = json.loads(body)
-                
-                # Anonymize customer_id in logs (GDPR/privacy)
-                if isinstance(body_json, dict) and 'customer_id' in body_json:
-                    body_json['customer_id'] = body_json['customer_id'][:8] + "..."
-                
-                request_log['body_sample'] = body_json
-            except:
-                pass
     
     api_logger.info("API Request", extra=request_log)
     
@@ -209,7 +195,7 @@ async def log_requests_middleware(request: Request, call_next):
     if response.status_code >= 400:
         api_logger.warning("API Response (Error)", extra=response_log)
     else:
-        api_logger.info("API Response", extra=response_log)
+        api_logger.info("API Response (Success)", extra=response_log)
     
     return response
 
