@@ -300,6 +300,108 @@ pip freeze > requirements-frozen.txt
 pip install -r requirements-frozen.txt
 ```
 
+## Docker Deployment
+
+### Prerequisites
+- Docker 20.10+
+- Docker Compose 1.29+
+
+### Quick Start
+
+**Start all services:**
+```bash
+./scripts/docker-start.sh
+```
+
+**Access:**
+- API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+- MLflow UI: http://localhost:5000
+
+**Stop services:**
+```bash
+./scripts/docker-stop.sh
+```
+
+### Manual Docker Commands
+
+**Build images:**
+```bash
+docker-compose build
+```
+
+**Start services:**
+```bash
+docker-compose up -d
+```
+
+**View logs:**
+```bash
+# All services
+docker-compose logs -f
+
+# API only
+docker-compose logs -f api
+
+# MLflow only
+docker-compose logs -f mlflow
+```
+
+**Stop services:**
+```bash
+docker-compose down
+```
+
+**Clean up everything:**
+```bash
+docker-compose down -v  # Remove volumes too
+```
+
+### Container Architecture
+┌─────────────────────────────────────┐
+│     docker-compose.yml              │
+├─────────────────────────────────────┤
+│  ┌──────────────┐  ┌─────────────┐ │
+│  │   MLflow     │  │     API     │ │
+│  │  Port: 5000  │  │  Port: 8000 │ │
+│  └──────┬───────┘  └──────┬──────┘ │
+│         │                 │         │
+│         └────────┬────────┘         │
+│         churnguard-network          │
+└─────────────────────────────────────┘
+
+### Troubleshooting
+
+**Container won't start:**
+```bash
+# Check logs
+docker-compose logs api
+
+# Rebuild from scratch
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+**Model not found:**
+```bash
+# Verify model file exists
+docker-compose exec api ls -lh /app/models/
+
+# Check MLflow connection
+docker-compose exec api curl http://mlflow:5000/health
+```
+
+**API not responding:**
+```bash
+# Check health
+curl http://localhost:8000/health/live
+
+# Enter container
+docker-compose exec api bash
+
+# Test internally
+curl http://localhost:8000/health
+```
 
 ## Quick Start
 

@@ -1,0 +1,113 @@
+# =======================================================================
+# ChurnGuard AI - Docker Compose Configuration
+# =======================================================================
+# This file orchestrates the local deployment of the ChurnGuard AI system.
+# It defines two primary containerized services:
+# 1. mlflow: Model tracking and model registry service
+# 2. api: FastAPI prediction service serving MLflow champion models
+# =======================================================================
+
+services:
+  # ---------------------------------------------------------------------
+  # MLflow Tracking & Registry Server
+  # ---------------------------------------------------------------------
+  mlflow:
+    # Use a slim Python image to keep container size optimized
+    image: python:3.10-slim
+    container_name: churnguard-mlflow
+
+    # Map host port 5000 to the container port 5000 (standard MLflow UI/API port)
+    ports:
+      - "5000:5000"
+
+    volumes:
+      # Persist the sqlite database that stores run metadata and registered models
+      - ./mlflow.db:/mlflow/mlflow.db
+      # Persist standard MLflow artifacts directory
+      - ./mlruns:/mlflow/mlruns
+      
+      # [CRITICAL VOLUME MOUNT FOR INTEROPERABILITY]
+      # Models trained and registered on the host machine write absolute host paths to mlflow.db:
+      # e.g., '/home/muhasin/ML-Projects/churnguard-ai/mlruns/.../artifacts/model'
+      # Mirroring the local mlruns folder at the identical absolute path inside the container
+      # allows containerized services to transparently load any host-registered run.
+      - ./mlruns:/home/muhasin/ML-Projects/churnguard-ai/mlruns
+
+    # Boot command: Installs MLflow on container startup and launches the server
+    command: >
+      sh -c "
+      pip install --no-cache-dir mlflow==2.8.0 &&
+      mlflow server
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlflow/mlruns
+      --host 0.0.0.0
+      --port 5000
+      "
+
+    # Health check verifies that port 5000 responds to HTTP requests before marking it ready
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000')"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      # start_period is set to 3 minutes to allow time for pip dependencies to download
+      start_period: 180s
+
+    networks:
+      - churnguard-network
+
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------
+  # FastAPI Prediction Service (ChurnGuard AI API)
+  # ---------------------------------------------------------------------
+  api:
+    # Build image using the Dockerfile in the current directory
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: churnguard-api
+
+    # Map host port 8000 to FastAPI's port 8000
+    ports:
+      - "8000:8000"
+
+    # API depends on MLflow being started (actual readiness wait is managed robustly by the docker-start.sh script)
+    depends_on:
+      - mlflow
+
+    # Configure FastAPI to load the model from the local containerized MLflow server
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_REGISTRY_URI=http://mlflow:5000
+      - MODEL_NAME=churnguard-classifier
+      - MODEL_STAGE=Production
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_WORKERS=1
+      - API_RELOAD=false
+
+    volumes:
+      # Mount application logs and cached feature pipelines
+      - ./logs:/app/logs
+      - ./models:/app/models
+      
+      # [CRITICAL VOLUME MOUNT FOR INTEROPERABILITY]
+      # Mirror the local mlruns folder at the identical absolute path inside the API container
+      # to enable loading MLflow models that were trained on the host.
+      - ./mlruns:/home/muhasin/ML-Projects/churnguard-ai/mlruns
+
+    networks:
+      - churnguard-network
+
+    restart: unless-stopped
+
+# -----------------------------------------------------------------------
+# Shared Private Network Configuration
+# -----------------------------------------------------------------------
+networks:
+  churnguard-network:
+    driver: bridge
