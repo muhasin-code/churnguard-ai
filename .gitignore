@@ -57,3 +57,7 @@ logs/
 # Great expectations
 great_expectations/uncommitted/
 great_expectations/.DS_Store
+
+
+# Tests
+.coverage
