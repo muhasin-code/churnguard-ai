@@ -403,6 +403,69 @@ docker-compose exec api bash
 curl http://localhost:8000/health
 ```
 
+## Testing
+
+### Running Tests
+
+**All tests:**
+```bash
+./scripts/run_tests.sh
+```
+
+**Fast tests only (skip performance tests):**
+```bash
+./scripts/run_tests_fast.sh
+```
+
+**Specific test file:**
+```bash
+pytest tests/api/routers/test_health.py -v
+```
+
+**With coverage report:**
+```bash
+pytest --cov=src/api --cov-report=html
+open htmlcov/index.html  # View coverage report
+```
+
+### Test Coverage
+
+Current coverage: **91%**
+
+Coverage breakdown:
+- `src/api/models.py`: 95%
+- `src/api/routers/`: 92-94%
+- `src/api/services/`: 90%
+- `src/api/config.py`: 88%
+
+### Test Categories
+
+Tests are marked with categories:
+- `unit`: Fast, isolated tests
+- `integration`: Tests requiring services
+- `slow`: Performance tests
+
+**Run specific category:**
+```bash
+pytest -m unit          # Unit tests only
+pytest -m "not slow"    # Skip slow tests
+pytest -m integration   # Integration tests only
+```
+
+### API Testing with Postman
+
+**Import collection:**
+1. Open Postman
+2. Import `postman/ChurnGuard_API.postman_collection.json`
+3. Set `base_url` variable to `http://localhost:8000`
+
+**Available requests:**
+- Health checks
+- Single/batch predictions
+- Validation test cases
+
+See `postman/README.md` for details.
+
 ## Quick Start
 
 ```bash

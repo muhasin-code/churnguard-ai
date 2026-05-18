@@ -1,0 +1,184 @@
+{
+    "info": {
+      "name": "ChurnGuard AI - Prediction API",
+      "description": "Complete API collection for ChurnGuard AI churn prediction service",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Health Checks",
+        "item": [
+          {
+            "name": "Basic Health Check",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/health/",
+                "host": ["{{base_url}}"],
+                "path": ["health", ""]
+              }
+            }
+          },
+          {
+            "name": "Readiness Check",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/health/ready",
+                "host": ["{{base_url}}"],
+                "path": ["health", "ready"]
+              }
+            }
+          },
+          {
+            "name": "Liveness Check",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/health/live",
+                "host": ["{{base_url}}"],
+                "path": ["health", "live"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Predictions",
+        "item": [
+          {
+            "name": "Single Prediction - Low Risk",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"customer_id\": \"POSTMAN_LOW_RISK\",\n  \"gender\": \"Female\",\n  \"age\": 35,\n  \"tenure\": 60,\n  \"contract_type\": \"Two Year\",\n  \"internet_service\": \"Fiber\",\n  \"monthly_charges\": 50.00,\n  \"total_charges\": 3000.00,\n  \"call_minutes\": 400.0,\n  \"data_usage\": 20.0,\n  \"complaints\": 0,\n  \"recent_support_tickets\": 0,\n  \"payment_method\": \"UPI\",\n  \"late_payments\": 0,\n  \"engagement\": 1.8\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/predict/",
+                "host": ["{{base_url}}"],
+                "path": ["predict", ""]
+              }
+            }
+          },
+          {
+            "name": "Single Prediction - High Risk",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"customer_id\": \"POSTMAN_HIGH_RISK\",\n  \"gender\": \"Male\",\n  \"age\": 45,\n  \"tenure\": 6,\n  \"contract_type\": \"Month-to-Month\",\n  \"internet_service\": \"Fiber\",\n  \"monthly_charges\": 95.50,\n  \"total_charges\": 573.00,\n  \"call_minutes\": 450.0,\n  \"data_usage\": 25.5,\n  \"complaints\": 3,\n  \"recent_support_tickets\": 2,\n  \"payment_method\": \"Credit Card\",\n  \"late_payments\": 2,\n  \"engagement\": 0.6\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/predict/",
+                "host": ["{{base_url}}"],
+                "path": ["predict", ""]
+              }
+            }
+          },
+          {
+            "name": "Batch Prediction",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"customers\": [\n    {\n      \"customer_id\": \"BATCH_001\",\n      \"gender\": \"Female\",\n      \"age\": 32,\n      \"tenure\": 48,\n      \"contract_type\": \"Two Year\",\n      \"internet_service\": \"DSL\",\n      \"monthly_charges\": 55.20,\n      \"total_charges\": 2649.60,\n      \"call_minutes\": 320.0,\n      \"data_usage\": 15.0,\n      \"complaints\": 0,\n      \"recent_support_tickets\": 0,\n      \"payment_method\": \"UPI\",\n      \"late_payments\": 0,\n      \"engagement\": 1.5\n    },\n    {\n      \"customer_id\": \"BATCH_002\",\n      \"gender\": \"Male\",\n      \"age\": 45,\n      \"tenure\": 6,\n      \"contract_type\": \"Month-to-Month\",\n      \"internet_service\": \"Fiber\",\n      \"monthly_charges\": 95.50,\n      \"total_charges\": 573.00,\n      \"call_minutes\": 450.0,\n      \"data_usage\": 25.5,\n      \"complaints\": 3,\n      \"recent_support_tickets\": 2,\n      \"payment_method\": \"Credit Card\",\n      \"late_payments\": 2,\n      \"engagement\": 0.6\n    }\n  ]\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/predict/batch",
+                "host": ["{{base_url}}"],
+                "path": ["predict", "batch"]
+              }
+            }
+          },
+          {
+            "name": "Model Info",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/predict/model-info",
+                "host": ["{{base_url}}"],
+                "path": ["predict", "model-info"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Validation Tests",
+        "item": [
+          {
+            "name": "Invalid Age (Under 18)",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"customer_id\": \"INVALID_AGE\",\n  \"gender\": \"Male\",\n  \"age\": 16,\n  \"tenure\": 12,\n  \"contract_type\": \"One Year\",\n  \"internet_service\": \"DSL\",\n  \"monthly_charges\": 55.20,\n  \"total_charges\": 662.40,\n  \"call_minutes\": 320.0,\n  \"data_usage\": 15.0,\n  \"complaints\": 0,\n  \"recent_support_tickets\": 0,\n  \"payment_method\": \"UPI\",\n  \"late_payments\": 0,\n  \"engagement\": 1.3\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/predict/",
+                "host": ["{{base_url}}"],
+                "path": ["predict", ""]
+              }
+            }
+          },
+          {
+            "name": "Invalid Total Charges",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"customer_id\": \"INVALID_TOTAL\",\n  \"gender\": \"Male\",\n  \"age\": 45,\n  \"tenure\": 60,\n  \"contract_type\": \"Two Year\",\n  \"internet_service\": \"Fiber\",\n  \"monthly_charges\": 85.50,\n  \"total_charges\": 500.00,\n  \"call_minutes\": 450.0,\n  \"data_usage\": 25.5,\n  \"complaints\": 1,\n  \"recent_support_tickets\": 0,\n  \"payment_method\": \"Credit Card\",\n  \"late_payments\": 0,\n  \"engagement\": 1.2\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/predict/",
+                "host": ["{{base_url}}"],
+                "path": ["predict", ""]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:8000",
+        "type": "string"
+      }
+    ]
+  }
