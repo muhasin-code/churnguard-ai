@@ -376,8 +376,7 @@ class BatchPredictionRequest(BaseModel):
     customers: List[CustomerData] = Field(
         ...,
         description="List of customers to predict",
-        min_items=1,
-        max_items=100 # Limit from settings.batch_size_limit
+        min_items=1
     )
 
     class Config:
